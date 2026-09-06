@@ -27,9 +27,9 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**.
 | **Current phase** | Pre-launch — repo, README & landing/dashboard preview live |
 | **Build checklist** | `░░░░░░░░░░░░░░░░░░░░` 0/14 (0%) |
 | **Days to ETHGlobal submission open** | 2 days |
-| **Latest commit** | [`f7fb07a`](https://github.com/arrnaya/AgentRIA/commit/f7fb07a0caa374b108967f41404a39fa508ab43c) Initial commit: RIA landing page, dashboard preview, and project README — Arrnaya |
-| **Total commits** | 1 |
-| **Last updated** | 2026-09-06 13:34 UTC |
+| **Latest commit** | [`0bf3fbe`](https://github.com/arrnaya/AgentRIA/commit/0bf3fbeba2378073a0a3f89de424cc199c172c33) Switch live domain to ria-agent.vercel.app — Arrnaya |
+| **Total commits** | 3 |
+| **Last updated** | 2026-09-06 13:38 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`._
 <!-- STATUS:END -->
