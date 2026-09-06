@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+:root {
+  /* Base */
+  --color-paper: #faf8f4;
+  --color-ink: #1c1a24;
+  --color-ink-soft: #4b4859;
+  --color-ink-faint: #8b869c;
+  --color-line: #e9e4f0;
+
+  /* Dark surfaces (hero / footer) */
+  --color-noir: #171522;
+  --color-noir-soft: #232030;
+  --color-noir-line: #35314a;
+
+  /* Pastel palette */
+  --color-lavender: #e7e0f8;
+  --color-lavender-deep: #b7a2ec;
+  --color-mint: #d9f2e6;
+  --color-mint-deep: #93d9b8;
+  --color-butter: #fbf1c8;
+  --color-butter-deep: #eed07f;
+  --color-blush: #f8e3ec;
+  --color-blush-deep: #eeb2cd;
+  --color-sky: #dcebf8;
+  --color-sky-deep: #a4cdec;
+}
+
+@theme inline {
+  --color-paper: var(--color-paper);
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-ink-faint: var(--color-ink-faint);
+  --color-line: var(--color-line);
+
+  --color-noir: var(--color-noir);
+  --color-noir-soft: var(--color-noir-soft);
+  --color-noir-line: var(--color-noir-line);
+
+  --color-lavender: var(--color-lavender);
+  --color-lavender-deep: var(--color-lavender-deep);
+  --color-mint: var(--color-mint);
+  --color-mint-deep: var(--color-mint-deep);
+  --color-butter: var(--color-butter);
+  --color-butter-deep: var(--color-butter-deep);
+  --color-blush: var(--color-blush);
+  --color-blush-deep: var(--color-blush-deep);
+  --color-sky: var(--color-sky);
+  --color-sky-deep: var(--color-sky-deep);
+
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-serif-display {
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+.bg-noise {
+  background-image: radial-gradient(circle at 1px 1px, rgba(28, 26, 36, 0.06) 1px, transparent 0);
+  background-size: 18px 18px;
+}
+
+::selection {
+  background: var(--color-lavender-deep);
+  color: var(--color-noir);
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 999px;
+}
