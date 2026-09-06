@@ -11,8 +11,8 @@ RIA is an autonomous, multi-agent DeFi intelligence system that combines live on
 
 Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**.
 
-[![Landing](https://img.shields.io/badge/landing-agentria.vercel.app-b7a2ec?style=flat-square)](https://agentria.vercel.app)
-[![Dashboard](https://img.shields.io/badge/dashboard-agentria.vercel.app%2Fapp-a4cdec?style=flat-square)](https://agentria.vercel.app/app)
+[![Landing](https://img.shields.io/badge/landing-ria--agent.vercel.app-b7a2ec?style=flat-square)](https://ria-agent.vercel.app)
+[![Dashboard](https://img.shields.io/badge/dashboard-ria--agent.vercel.app%2Fapp-a4cdec?style=flat-square)](https://ria-agent.vercel.app/app)
 [![Deploy](https://img.shields.io/github/actions/workflow/status/arrnaya/AgentRIA/update-status.yml?label=status%20bot&style=flat-square)](https://github.com/arrnaya/AgentRIA/actions/workflows/update-status.yml)
 [![Last commit](https://img.shields.io/github/last-commit/arrnaya/AgentRIA?style=flat-square&color=93d9b8)](https://github.com/arrnaya/AgentRIA/commits/main)
 [![License](https://img.shields.io/badge/license-MIT-eeb2cd?style=flat-square)](#license)
@@ -228,8 +228,8 @@ what's on the roadmap starting September 8:
 | Component | Status |
 |---|---|
 | Project proposal & architecture docs | ✅ Complete |
-| Public landing page (`/`) — [agentria.vercel.app](https://agentria.vercel.app) | ✅ Live |
-| Dashboard interface preview (`/app`) — [agentria.vercel.app/app](https://agentria.vercel.app/app) | ✅ Live (static preview, illustrative data) |
+| Public landing page (`/`) — [ria-agent.vercel.app](https://ria-agent.vercel.app) | ✅ Live |
+| Dashboard interface preview (`/app`) — [ria-agent.vercel.app/app](https://ria-agent.vercel.app/app) | ✅ Live (static preview, illustrative data) |
 | README with self-updating status | ✅ Live (this file) |
 | RECON — Subgraph MCP / Substreams client | 🔜 From Sep 8 |
 | SCOUT / RISK — LangGraph agents | 🔜 From Sep 8 |
@@ -252,8 +252,8 @@ The frontend below is live today at the repo root. `agents/`, `graph/`, `hedera/
 AgentRIA/
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx          # Landing page  →  agentria.vercel.app
-│   │   ├── app/page.tsx      # Dashboard      →  agentria.vercel.app/app
+│   │   ├── page.tsx          # Landing page  →  ria-agent.vercel.app
+│   │   ├── app/page.tsx      # Dashboard      →  ria-agent.vercel.app/app
 │   │   ├── layout.tsx
 │   │   └── globals.css
 │   └── components/           # Shared UI (Nav, Footer, Brand, Card, Pill…)
@@ -389,7 +389,7 @@ the boxes below on every push — check one off in a commit and the status block
 - [ ] HCS audit trail topic created and logging (Hedera Testnet)
 - [ ] ERC-8004 agent identity registration (Hedera Testnet)
 - [ ] ENSv2 subnames with Permissioned Resolver (Sepolia)
-- [ ] Dashboard — all 4 panels live with real data (agentria.vercel.app/app)
+- [ ] Dashboard — all 4 panels live with real data (ria-agent.vercel.app/app)
 - [ ] WebSocket server emitting all 4 event types (pipeline runner)
 - [ ] SKILL.md written for The Graph track (repo root)
 - [ ] README finalized with setup, architecture, payment flow
