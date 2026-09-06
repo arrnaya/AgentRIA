@@ -26,10 +26,10 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**.
 |---|---|
 | **Current phase** | Pre-launch — repo, README & landing/dashboard preview live |
 | **Build checklist** | `░░░░░░░░░░░░░░░░░░░░` 0/14 (0%) |
-| **Days to ETHGlobal submission open** | counting down to Sep 8, 2026 |
-| **Latest commit** | — |
-| **Total commits** | — |
-| **Last updated** | — |
+| **Days to ETHGlobal submission open** | 2 days |
+| **Latest commit** | [`f7fb07a`](https://github.com/arrnaya/AgentRIA/commit/f7fb07a0caa374b108967f41404a39fa508ab43c) Initial commit: RIA landing page, dashboard preview, and project README — Arrnaya |
+| **Total commits** | 1 |
+| **Last updated** | 2026-09-06 13:34 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`._
 <!-- STATUS:END -->
