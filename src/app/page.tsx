@@ -176,7 +176,7 @@ export default function Home() {
           {[
             { label: "Subgraphs in scope", value: "15,000+" },
             { label: "Autonomous agents", value: "6" },
-            { label: "Prize pool targeted", value: "$12,500+" },
+            { label: "Via Hedera's x402 protocol", value: "Autonomous Payments" },
           ].map((s) => (
             <div
               key={s.label}
@@ -315,7 +315,7 @@ export default function Home() {
       </section>
 
       {/* TRACKS */}
-      <section id="tracks" className="mx-auto mt-28 max-w-6xl scroll-mt-24 px-4 sm:px-6">
+      {/* <section id="tracks" className="mx-auto mt-28 max-w-6xl scroll-mt-24 px-4 sm:px-6">
         <SectionHeading
           eyebrow="Qualification"
           title="Built for three"
@@ -353,7 +353,7 @@ export default function Home() {
             <p className="text-xs text-ink-faint">Live data · zero mocked datasets</p>
           </Card>
         </div>
-      </section>
+      </section> */}
 
       {/* VERIFY */}
       <section id="verify" className="mx-auto mt-28 max-w-4xl scroll-mt-24 px-4 sm:px-6">
@@ -380,7 +380,7 @@ export default function Home() {
 
       {/* FAQ */}
       <section id="faq" className="mx-auto mt-28 max-w-3xl scroll-mt-24 px-4 sm:px-6">
-        <SectionHeading eyebrow="FAQ" title="Questions from" italic="ETHGlobal judges" />
+        <SectionHeading eyebrow="FAQ" title="Questions from" italic="Users" />
         <div className="mt-10 divide-y divide-line rounded-[2rem] border border-line bg-white/70">
           {faqs.map((f) => (
             <details key={f.q} className="group px-6 py-5">
