@@ -298,7 +298,8 @@ intact while giving judges interactive, live proof of every decision and payment
 | Public landing page (`/`) — [ria-agent.vercel.app](https://ria-agent.vercel.app) | ✅ Live |
 | Dashboard interface preview (`/app`) — [ria-agent.vercel.app/app](https://ria-agent.vercel.app/app) | ✅ Live (static preview, illustrative data) |
 | README with self-updating status | ✅ Live (this file) |
-| RECON — Subgraph Studio / Substreams client | 🔜 Not started |
+| RECON — Subgraph Studio client + normalization (`graph/`, `agents/recon.py`) | 🟡 Built & unit-tested against mocked responses — needs a live `GRAPH_API_KEY` to run for real |
+| Substreams (liquidation event stream) | 🔜 Not started |
 | SCOUT / RISK — LangGraph agents | 🔜 Not started |
 | `mcp_server/` — x402-gated MCP server + 5 priced tools | 🔜 Not started |
 | ORACLE — MCP client + x402 payment flow | 🔜 Not started |
@@ -326,22 +327,33 @@ AgentRIA/
 │   │   ├── layout.tsx
 │   │   └── globals.css
 │   └── components/            # Shared UI (Nav, Footer, Brand, Card, Pill…)
-├── agents/                    # 🔜 recon.py · scout.py · risk.py · oracle.py · exec.py · audit.py
-├── graph/                     # 🔜 subgraph_client.py · substreams_client.py · queries/ (Messari schema)
-├── mcp_server/                # 🔜 NEW in v3 — standalone x402-gated MCP server
-│   ├── server.py              #     MCP server (HTTP/SSE mode)
-│   ├── x402_middleware.py     #     Blocky402 payment verification middleware
-│   ├── tools/                 #     gas_price · sentiment · risk_score · price_feed · liquidation_stream
-│   └── pricing.py             #     per-tool HBAR price config
-├── hedera/                    # 🔜 x402_client.py · hcs_logger.py · wallet.py
-├── ens/                       # 🔜 register.py · resolver.py
-├── pipeline/                  # 🔜 state.py · graph.py · runner.py · ws_server.py
-├── tests/                     # 🔜
-├── .github/workflows/         # update-status.yml — keeps the Live Status block current
-├── assets/                    # Reference designs & project proposal
-├── .env.example                # 🔜
-└── SKILL.md                    # 🔜 required for The Graph track
+├── agents/
+│   ├── recon.py                # ✅ built — Subgraph Studio ingestion + normalization
+│   └── scout.py · risk.py · oracle.py · exec.py · audit.py   # 🔜
+├── graph/
+│   ├── subgraph_client.py      # ✅ built — Graph Gateway async client
+│   ├── queries/messari.py      # ✅ built — DEX + lending query templates
+│   └── substreams_client.py    # 🔜
+├── mcp_server/                 # 🔜 NEW in v3 — standalone x402-gated MCP server
+│   ├── server.py               #     MCP server (HTTP/SSE mode)
+│   ├── x402_middleware.py      #     Blocky402 payment verification middleware
+│   ├── tools/                  #     gas_price · sentiment · risk_score · price_feed · liquidation_stream
+│   └── pricing.py              #     per-tool HBAR price config
+├── hedera/                     # 🔜 x402_client.py · hcs_logger.py · wallet.py
+├── ens/                        # 🔜 register.py · resolver.py
+├── pipeline/
+│   ├── state.py                 # ✅ built — typed state threaded through the StateGraph
+│   └── graph.py · runner.py · ws_server.py   # 🔜
+├── tests/                       # ✅ pytest + respx, mocked Graph Gateway responses
+├── .github/workflows/           # update-status.yml — keeps the Live Status block current
+├── assets/                      # Reference designs & project proposal
+├── requirements.txt              # ✅ built
+└── SKILL.md                      # 🔜 required for The Graph track
 ```
+
+Environment variables (`GRAPH_API_KEY`, `HEDERA_ACCOUNT_ID`, …) are documented in
+[Environment Variables](#environment-variables) below rather than a committed `.env.example` —
+`.env*` paths are intentionally kept out of version control.
 
 ## Tech Stack
 
@@ -377,6 +389,13 @@ AgentRIA/
 
 ## Running Locally
 
+This repo ships a project-scoped `.mcp.json` that wires up the
+[Hedera Docs MCP server](https://docs.hedera.com/hedera/tutorials/more-tutorials/hedera-mcp-server-setup-guide)
+so any AI coding agent working in this repo can query Hedera's docs directly. Optionally add the
+[Hedera Skills](https://github.com/hedera-dev/hedera-skills) plugin marketplace too —
+`/plugin marketplace add hedera-dev/hedera-skills` in Claude Code — for the Agent Kit and
+submission-validator skills.
+
 The frontend in this repo runs standalone today:
 
 ```bash
@@ -388,7 +407,33 @@ npm run dev
 # → http://localhost:3000/app    (dashboard preview)
 ```
 
-Once the backend lands, the full stack starts in four terminals:
+The Python backend is landing incrementally (see [What's Live](#whats-live-in-this-repo-right-now)).
+What exists today — RECON's Subgraph Studio client — runs and tests like this:
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+# Run the test suite (mocked Graph Gateway responses — no API key needed)
+pytest
+
+# Run RECON for real (needs a free key from https://thegraph.com/studio/)
+export GRAPH_API_KEY=your_key_here
+python -c "
+import asyncio
+from agents.recon import run_recon
+from pipeline.state import RiaState
+
+async def main():
+    state = await run_recon(RiaState())
+    for s in state.signals:
+        print(s['protocol'], s['pair'], s['type'], s['raw_metrics'])
+
+asyncio.run(main())
+"
+```
+
+Once the rest of the backend lands, the full stack starts in four terminals:
 
 ```bash
 # Terminal 1 — x402-gated MCP server
