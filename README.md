@@ -26,12 +26,12 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 <!-- STATUS:START -->
 | | |
 |---|---|
-| **Current phase** | Pre-launch — repo, README & landing/dashboard preview live |
+| **Current phase** | Architecture finalized (v3) — implementation not yet started |
 | **Build checklist** | `░░░░░░░░░░░░░░░░░░░░` 0/15 (0%) |
-| **ETHGlobal submission window** | — |
-| **Latest commit** | — |
-| **Total commits** | — |
-| **Last updated** | — |
+| **ETHGlobal submission window** | Open since Sep 8, 2026 (day 2) |
+| **Latest commit** | [`4d92ac8`](https://github.com/arrnaya/AgentRIA/commit/4d92ac88854d9ee57eea8aeb310ec170e4af55f7) Update repo to Architecture v3: x402-gated MCP server — Arrnaya |
+| **Total commits** | 10 |
+| **Last updated** | 2026-09-09 10:12 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`._
 <!-- STATUS:END -->
