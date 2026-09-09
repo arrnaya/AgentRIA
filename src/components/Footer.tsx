@@ -7,15 +7,15 @@ const columns = [
     links: [
       { label: "Executive Summary", href: "/#top" },
       { label: "Architecture", href: "/#architecture" },
-      { label: "Build Status", href: "https://github.com/arrnaya/AgentRIA#status" },
+      { label: "Build Status", href: "https://github.com/arrnaya/AgentRIA" },
     ],
   },
   {
     heading: "Tracks",
     links: [
-      { label: "The Graph — AI Use Case", href: "/#tracks" },
-      { label: "Hedera — Agentic Payments", href: "/#tracks" },
-      { label: "ENS — Best Use of ENSv2", href: "/#tracks" },
+      { label: "The Graph — AI Use Case", href: "https://github.com/arrnaya/AgentRIA#hackathon-qualification-mapping" },
+      { label: "Hedera — Agentic Payments", href: "https://github.com/arrnaya/AgentRIA#hackathon-qualification-mapping" },
+      { label: "ENS — Best Use of ENSv2", href: "https://github.com/arrnaya/AgentRIA#hackathon-qualification-mapping" },
     ],
   },
   {

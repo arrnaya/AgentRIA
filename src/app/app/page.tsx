@@ -20,18 +20,16 @@ const opportunities = [
 ];
 
 const trace = [
-  { name: "RECON", status: "Complete", note: "Pulled 4 opportunity signals from Subgraph MCP" },
+  { name: "RECON", status: "Complete", note: "Pulled 4 opportunity signals from Subgraph Studio" },
   { name: "SCOUT", status: "Complete", note: "Ranked signals — top spread 2.3% APY" },
   { name: "RISK", status: "Routed → ORACLE", note: "Confidence 0.71, above 0.65 threshold" },
-  { name: "ORACLE", status: "Pending", note: "Will pay via x402 once pipeline connects" },
+  { name: "ORACLE", status: "Pending", note: "Will call the x402 MCP server once pipeline connects" },
   { name: "EXEC", status: "Waiting", note: "Gated on ORACLE enrichment" },
   { name: "AUDIT", status: "Waiting", note: "Logs to HCS after EXEC completes" },
 ];
 
 const identities = [
   "ria-recon.ria.eth",
-  "ria-scout.ria.eth",
-  "ria-risk.ria.eth",
   "ria-oracle.ria.eth",
   "ria-exec.ria.eth",
   "ria-audit.ria.eth",
@@ -77,9 +75,8 @@ export default function Dashboard() {
         {/* PREVIEW BANNER */}
         <div className="flex flex-col gap-1 rounded-2xl border border-butter-deep/40 bg-butter px-5 py-4 text-sm text-[#6b4f10] shadow-[0_12px_30px_-18px_rgba(23,21,34,0.35)] sm:flex-row sm:items-center sm:justify-between">
           <p>
-            <span className="font-medium">Preview interface.</span> The live agent pipeline
-            connects starting <span className="font-medium">September 8, 2026</span> — data below
-            illustrates the finished dashboard.
+            <span className="font-medium">Preview interface.</span> Data below illustrates the
+            finished dashboard — the live agent pipeline connects as each build milestone ships.
           </p>
           <a href="https://github.com/arrnaya/AgentRIA" className="shrink-0 font-medium underline underline-offset-2">
             Follow build progress →
@@ -194,7 +191,7 @@ export default function Dashboard() {
               <button
                 disabled
                 className="flex-1 cursor-not-allowed rounded-full bg-ink/10 px-4 py-2.5 text-sm font-medium text-ink-faint"
-                title="Read-only preview — execution connects September 8"
+                title="Read-only preview — this dashboard never executes"
               >
                 Execute (read-only)
               </button>
@@ -221,8 +218,8 @@ export default function Dashboard() {
                 ))}
               </div>
               <dl className="mt-4 space-y-2 text-xs">
-                <div className="flex justify-between"><dt className="text-ink-faint">Endpoint</dt><dd className="font-mono text-ink-soft">/v1/enrich</dd></div>
-                <div className="flex justify-between"><dt className="text-ink-faint">Amount</dt><dd className="font-mono text-ink-soft">0.05 HBAR</dd></div>
+                <div className="flex justify-between"><dt className="text-ink-faint">Tool</dt><dd className="font-mono text-ink-soft">get_risk_score()</dd></div>
+                <div className="flex justify-between"><dt className="text-ink-faint">Amount</dt><dd className="font-mono text-ink-soft">0.002 HBAR</dd></div>
                 <div className="flex justify-between"><dt className="text-ink-faint">Facilitator</dt><dd className="text-ink-soft">Blocky402</dd></div>
                 <div className="flex justify-between"><dt className="text-ink-faint">Tx</dt><dd className="font-mono text-ink-faint">awaiting first call</dd></div>
               </dl>
@@ -256,7 +253,7 @@ export default function Dashboard() {
               <p className="text-sm font-medium text-ink">Agent Identity — ENSv2 (Sepolia)</p>
               <span className="text-xs text-ink-faint">ria.eth</span>
             </div>
-            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {identities.map((id) => (
                 <div key={id} className="flex items-center justify-between rounded-xl bg-paper px-4 py-3 text-sm">
                   <span className="font-mono text-xs text-ink-soft">{id}</span>

@@ -22,7 +22,7 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "RIA — Reconnaissance Intelligence Agent",
   description:
-    "RIA is an autonomous multi-agent DeFi intelligence system: live on-chain data from The Graph, LangGraph reasoning, self-paying Hedera x402 execution, and ENSv2 agent identity — built for ETHGlobal Online 2026.",
+    "RIA is an autonomous multi-agent DeFi intelligence system: free live data from The Graph, LangGraph reasoning, a commercial x402-gated MCP server on Hedera any AI agent can pay to use, and ENSv2 agent identity — built for ETHGlobal Online 2026.",
   metadataBase: new URL("https://ria-agent.vercel.app"),
   openGraph: {
     title: "RIA — On-chain intelligence that acts.",

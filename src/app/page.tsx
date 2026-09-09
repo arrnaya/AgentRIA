@@ -7,7 +7,7 @@ const agents = [
   {
     name: "RECON",
     role: "Data ingestion & normalization",
-    input: "Subgraph MCP / Substreams",
+    input: "Subgraph Studio / Substreams",
     output: "Normalized opportunity signals",
     tone: "sky" as const,
   },
@@ -29,7 +29,7 @@ const agents = [
     name: "ORACLE",
     role: "External signal enrichment",
     input: "Recommendations",
-    output: "Enriched signals (paid via x402)",
+    output: "Enriched signals — pays the x402 MCP server",
     tone: "blush" as const,
   },
   {
@@ -48,30 +48,31 @@ const agents = [
   },
 ];
 
-const tracks = [
+const mcpTools = [
   {
-    name: "The Graph",
-    sub: "Best AI Use Case — From Scratch",
-    prize: "$5,000",
-    tone: "sky" as const,
-    detail:
-      "RECON composes Subgraph MCP, Substreams, and Messari Standardized Subgraphs across 15,000+ subgraphs and 50+ networks — a single schema spans Uniswap, Aave, Compound, and Curve. Zero mocked data.",
+    name: "get_gas_price()",
+    desc: "Live gas + EIP-1559 base fee via Etherscan",
+    price: "0.0005 HBAR",
   },
   {
-    name: "Hedera",
-    sub: "AI & Agentic Payments",
-    prize: "$6,000",
-    tone: "blush" as const,
-    detail:
-      "ORACLE autonomously pays per inference call in HBAR via the x402 protocol through Blocky402 — no stored API key, no human approval. Every payment is logged to Hedera Consensus Service.",
+    name: "get_sentiment()",
+    desc: "Protocol sentiment score via LLM synthesis",
+    price: "0.001 HBAR",
   },
   {
-    name: "ENSv2",
-    sub: "Best Use of ENSv2",
-    prize: "$500+",
-    tone: "mint" as const,
-    detail:
-      "Each agent carries its own ENSv2 subname on Sepolia (e.g. ria-oracle.ria.eth) with isolated permissions via the Permissioned Resolver and ENSIP-26 agent metadata.",
+    name: "get_risk_score()",
+    desc: "Risk-adjusted confidence delta — the main SKU",
+    price: "0.002 HBAR",
+  },
+  {
+    name: "get_price_feed()",
+    desc: "Spot price + 24h change via CoinGecko",
+    price: "0.0005 HBAR",
+  },
+  {
+    name: "stream_alerts()",
+    desc: "Filtered liquidation-proximity alerts",
+    price: "0.001 HBAR / alert",
   },
 ];
 
@@ -81,8 +82,12 @@ const verifications = [
     detail: "Live Subgraph Studio API key — every query hits real mainnet subgraphs, nothing mocked.",
   },
   {
-    label: "Hedera payment",
-    detail: "HashScan link in the Payment Monitor opens the live HBAR transfer to Blocky402.",
+    label: "MCP payment",
+    detail: "Every x402 tool call resolves to a real HBAR transfer, visible on HashScan the moment it confirms.",
+  },
+  {
+    label: "External agent proof",
+    detail: "A second AI agent — not RIA — pays the same MCP server live during the demo.",
   },
   {
     label: "HCS audit trail",
@@ -97,28 +102,29 @@ const verifications = [
 const faqs = [
   {
     q: "Is RIA just a dashboard?",
-    a: "No — RIA is an agent that acts, and a dashboard that proves it. The pipeline runs independently in Python; the Next.js dashboard is a read-only observer that streams every reasoning step and payment over WebSocket so nothing happens off-screen.",
+    a: "No — RIA is an agent that acts, and a commercial primitive that proves how the AI agent economy should handle payments. The pipeline runs independently in Python; the Next.js dashboard is a read-only observer that streams every reasoning step and payment over WebSocket so nothing happens off-screen.",
   },
   {
     q: "Where does RIA's data actually come from?",
-    a: "The Graph. RECON queries the Subgraph MCP and Substreams in real time, composing Messari Standardized Subgraphs so one schema spans Uniswap, Aave, Compound, Curve, and any ERC-4626 vault across 50+ networks. Nothing is mocked.",
+    a: "The Graph. RECON queries Subgraph Studio and Substreams directly in real time, composing Messari Standardized Subgraphs so one schema spans Uniswap, Aave, Compound, Curve, and any ERC-4626 vault across 50+ networks. This layer is free and never routed through a payment gate.",
   },
   {
-    q: "How does an AI agent pay for its own inference?",
-    a: "ORACLE calls an x402-gated endpoint hosted on Hedera testnet. It gets an HTTP 402 with payment instructions, signs and submits an HBAR transfer, Blocky402 confirms it in under 3 seconds, and ORACLE retries with its access token — fully autonomous, no stored key.",
+    q: "How does an AI agent pay for enrichment data?",
+    a: "ORACLE calls a tool on RIA's x402-gated MCP server — say get_risk_score(). It gets an HTTP 402 with payment instructions, signs and submits an HBAR transfer, Blocky402 confirms it in under 3 seconds, and ORACLE retries with its access token to receive the enriched data. Fully autonomous, no stored key.",
+  },
+  {
+    q: "Can other AI agents use RIA's payment server too?",
+    a: "Yes — that's the point. The MCP server isn't RIA-specific infrastructure. Any MCP-compatible agent (Claude, GPT, Gemini, a LangGraph or CrewAI agent) can connect, pay per tool call in HBAR, and get data back. RIA's ORACLE is simply the first consumer.",
   },
   {
     q: "Can anyone verify what RIA actually did?",
     a: "Yes. Every claim resolves on-chain: HashScan for the HBAR payment, the HCS mirror node for the audit log entry, and the ENS app on Sepolia for live agent identity — judges don't have to take anything on faith.",
   },
-  {
-    q: "When does the live pipeline go live?",
-    a: "ETHGlobal Online 2026 submission opens September 8. RIA builds in a six-day pipeline — data, intelligence, payments, identity & audit, dashboard, polish — with updates pushed to this repo daily from day one.",
-  },
 ];
 
 const techBadges = [
   "The Graph",
+  "MCP",
   "Hedera x402",
   "ENSv2",
   "LangGraph",
@@ -150,9 +156,9 @@ export default function Home() {
           </h1>
 
           <p className="mx-auto mt-5 max-w-xl text-balance text-[15px] leading-relaxed text-paper/65 sm:text-base">
-            RIA is an autonomous multi-agent DeFi intelligence system — live data from The Graph,
-            LangGraph reasoning, self-paying execution on Hedera x402, and an ENSv2 identity for
-            every agent — all made visible in real time.
+            RIA is an autonomous multi-agent DeFi intelligence system — free live data from The
+            Graph, LangGraph reasoning, and a commercial x402-gated MCP server on Hedera that any
+            AI agent can pay to use — all made visible in real time.
           </p>
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -176,7 +182,7 @@ export default function Home() {
           {[
             { label: "Subgraphs in scope", value: "15,000+" },
             { label: "Autonomous agents", value: "6" },
-            { label: "Via Hedera's x402 protocol", value: "Autonomous Payments" },
+            { label: "x402 MCP server on Hedera", value: "5 priced tools" },
           ].map((s) => (
             <div
               key={s.label}
@@ -209,9 +215,8 @@ export default function Home() {
       {/* PROBLEM -> SOLUTION */}
       <section className="mx-auto mt-24 max-w-3xl px-4 sm:px-6">
         <p className="text-center font-serif-display text-xl italic leading-snug text-ink sm:text-2xl">
-          &ldquo;DeFi operates at machine speed. Price discrepancies close in seconds. Liquidation
-          thresholds break in a single block. RIA is not a dashboard — it is an agent that acts,
-          and a dashboard that proves it.&rdquo;
+          &ldquo;RIA is not a dashboard. It is an agent that acts — and a commercial primitive that
+          proves how the AI agent economy should handle payments.&rdquo;
         </p>
       </section>
 
@@ -239,8 +244,8 @@ export default function Home() {
           <p className="mt-6 max-w-2xl text-sm leading-relaxed text-paper/60">
             RISK routes high-confidence signals to EXEC and low-confidence signals to a human
             alert queue in the dashboard. ORACLE is the only agent with payment authority — it
-            holds the HBAR wallet and is the sole x402 caller. AUDIT writes a structured,
-            block-timestamped payload to HCS after every EXEC cycle.
+            holds the HBAR wallet and is the sole caller of the x402-gated MCP server. AUDIT
+            writes a structured, block-timestamped payload to HCS after every EXEC cycle.
           </p>
         </div>
 
@@ -264,6 +269,39 @@ export default function Home() {
         </div>
       </section>
 
+      {/* CORE INNOVATION — MCP SERVER */}
+      <section id="mcp" className="mx-auto mt-28 max-w-6xl scroll-mt-24 px-4 sm:px-6">
+        <SectionHeading
+          eyebrow="Core Innovation"
+          title="A payment server"
+          italic="any agent can use"
+          description="RIA hosts an x402-gated MCP server on Hedera. Every tool call is metered and paid in HBAR — no API key, no subscription, no human in the loop. ORACLE is the first consumer; the server itself is the product."
+        />
+
+        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {mcpTools.map((t) => (
+            <Card key={t.name} className="flex flex-col justify-between">
+              <div>
+                <p className="font-mono text-xs text-ink-faint">{t.name}</p>
+                <p className="mt-2 text-sm text-ink-soft">{t.desc}</p>
+              </div>
+              <p className="mt-4 font-serif-display text-lg italic text-lavender-deep">{t.price}</p>
+            </Card>
+          ))}
+        </div>
+
+        <div className="mt-6 overflow-hidden rounded-[2rem] bg-noir p-6 text-paper sm:p-10">
+          <p className="text-xs uppercase tracking-wider text-paper/40">The killer moment</p>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-paper/70">
+            During the demo, a second AI agent — not RIA — connects to the MCP server cold: a
+            plain <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-paper/90">curl</code> call
+            gets a 402, pays HBAR, and gets data back in about 20 seconds. It proves the server is
+            a generalized commercial primitive any MCP-compatible agent can use, not a RIA-only
+            trick.
+          </p>
+        </div>
+      </section>
+
       {/* AGENT TRACE + PAYMENT MOCKUP */}
       <section className="mx-auto mt-28 max-w-6xl px-4 sm:px-6">
         <div className="grid grid-cols-1 gap-4 overflow-hidden rounded-[2rem] bg-noir p-4 text-paper sm:grid-cols-[1.3fr_1fr] sm:p-6">
@@ -276,7 +314,7 @@ export default function Home() {
                 { name: "RECON", status: "Complete", tone: "text-mint-deep" },
                 { name: "SCOUT", status: "Complete", tone: "text-mint-deep" },
                 { name: "RISK", status: "Routed → ORACLE", tone: "text-sky-deep" },
-                { name: "ORACLE", status: "Paying via x402…", tone: "text-butter-deep" },
+                { name: "ORACLE", status: "Calling MCP tool…", tone: "text-butter-deep" },
               ].map((row) => (
                 <div
                   key={row.name}
@@ -306,54 +344,13 @@ export default function Home() {
               ))}
             </div>
             <div className="mt-5 space-y-1.5 text-xs text-paper/50">
-              <p className="flex justify-between"><span>Endpoint</span><span className="font-mono text-paper/70">/v1/enrich</span></p>
-              <p className="flex justify-between"><span>Amount</span><span className="font-mono text-paper/70">0.05 HBAR</span></p>
+              <p className="flex justify-between"><span>Tool</span><span className="font-mono text-paper/70">get_risk_score()</span></p>
+              <p className="flex justify-between"><span>Amount</span><span className="font-mono text-paper/70">0.002 HBAR</span></p>
               <p className="flex justify-between"><span>Facilitator</span><span className="text-paper/70">Blocky402</span></p>
             </div>
           </div>
         </div>
       </section>
-
-      {/* TRACKS */}
-      {/* <section id="tracks" className="mx-auto mt-28 max-w-6xl scroll-mt-24 px-4 sm:px-6">
-        <SectionHeading
-          eyebrow="Qualification"
-          title="Built for three"
-          italic="tracks"
-          description="RIA composes each sponsor's product as a load-bearing part of the system — not a bolted-on integration."
-        />
-        <div className="mt-12 grid grid-cols-1 gap-5 lg:grid-cols-3">
-          {tracks.map((t) => (
-            <Card key={t.name} className="flex flex-col">
-              <div className="flex items-center justify-between">
-                <Pill tone={t.tone}>{t.name}</Pill>
-                <span className="font-serif-display italic text-lg text-ink">{t.prize}</span>
-              </div>
-              <p className="mt-4 text-sm font-medium text-ink">{t.sub}</p>
-              <p className="mt-2 text-sm leading-relaxed text-ink-soft">{t.detail}</p>
-            </Card>
-          ))}
-        </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-[1fr_auto]">
-          <Card>
-            <p className="text-sm font-medium text-ink">Why this composition wins</p>
-            <ul className="mt-4 space-y-3 text-sm text-ink-soft">
-              <li>· Composes 3 Graph products — Subgraph MCP, Substreams, Standardized Subgraphs — the highest qualification tier.</li>
-              <li>· Hosts <em className="font-serif-display italic not-italic font-medium text-ink">and</em> consumes the x402 service end-to-end, not a proof-of-concept stub.</li>
-              <li>· Checks every ENSv2 bonus box: Permissioned Resolver, Enhanced Access Control, ENSIP-26 metadata.</li>
-            </ul>
-          </Card>
-          <Card className="flex flex-col items-center justify-center gap-3 px-8 text-center">
-            <div className="relative flex h-28 w-28 items-center justify-center rounded-full bg-[conic-gradient(var(--color-mint-deep)_100%,var(--color-line)_0)]">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white">
-                <span className="text-xl font-medium text-ink">100%</span>
-              </div>
-            </div>
-            <p className="text-xs text-ink-faint">Live data · zero mocked datasets</p>
-          </Card>
-        </div>
-      </section> */}
 
       {/* VERIFY */}
       <section id="verify" className="mx-auto mt-28 max-w-4xl scroll-mt-24 px-4 sm:px-6">
@@ -403,7 +400,7 @@ export default function Home() {
             <span className="font-serif-display italic text-lavender-deep">intelligence act?</span>
           </h2>
           <p className="relative mx-auto mt-4 max-w-md text-sm text-paper/60">
-            Full build updates land daily starting September 8 — follow along on GitHub or open
+            Build updates land on GitHub as each checklist milestone ships — follow along or open
             the live dashboard.
           </p>
           <div className="relative mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">

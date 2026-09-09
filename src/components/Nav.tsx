@@ -3,7 +3,7 @@ import { Logomark } from "./Brand";
 
 const links = [
   { href: "#agents", label: "Agents" },
-  { href: "#tracks", label: "Tracks" },
+  { href: "#mcp", label: "MCP Server" },
   { href: "#verify", label: "Verify" },
   { href: "#faq", label: "FAQ" },
 ];
