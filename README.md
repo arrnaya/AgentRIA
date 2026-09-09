@@ -29,9 +29,9 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 | **Current phase** | Architecture finalized (v3) — implementation not yet started |
 | **Build checklist** | `░░░░░░░░░░░░░░░░░░░░` 0/15 (0%) |
 | **ETHGlobal submission window** | Open since Sep 8, 2026 (day 2) |
-| **Latest commit** | [`4d92ac8`](https://github.com/arrnaya/AgentRIA/commit/4d92ac88854d9ee57eea8aeb310ec170e4af55f7) Update repo to Architecture v3: x402-gated MCP server — Arrnaya |
-| **Total commits** | 10 |
-| **Last updated** | 2026-09-09 10:12 UTC |
+| **Latest commit** | [`b442d8e`](https://github.com/arrnaya/AgentRIA/commit/b442d8e89245d841942625c4b1971dffb2f202ad) Day 1: RECON agent + Subgraph Studio client (Graph data layer) — Arrnaya |
+| **Total commits** | 12 |
+| **Last updated** | 2026-09-09 23:54 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`._
 <!-- STATUS:END -->
