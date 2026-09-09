@@ -24,12 +24,12 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**.
 <!-- STATUS:START -->
 | | |
 |---|---|
-| **Current phase** | Day 1 — Data Layer (Subgraph MCP + Substreams + RECON) |
+| **Current phase** | Day 2 — Intelligence Layer (SCOUT + RISK + LangGraph routing) |
 | **Build checklist** | `░░░░░░░░░░░░░░░░░░░░` 0/14 (0%) |
 | **Days to ETHGlobal submission open** | Submission window open |
-| **Latest commit** | [`9ab3b6f`](https://github.com/arrnaya/AgentRIA/commit/9ab3b6f0658a04d392c83a1b04782aefe62774f8) chore: update live status [skip ci] — github-actions[bot] |
-| **Total commits** | 7 |
-| **Last updated** | 2026-09-08 10:07 UTC |
+| **Latest commit** | [`877b586`](https://github.com/arrnaya/AgentRIA/commit/877b586f9650a7e7c4cf8eb1bfbb33973eb4fdf9) chore: update live status [skip ci] — github-actions[bot] |
+| **Total commits** | 8 |
+| **Last updated** | 2026-09-09 10:09 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`._
 <!-- STATUS:END -->
