@@ -180,8 +180,8 @@ commercial model, not a resale of public data.
 │  by RECON agent  │  WebSocket ──────────┼──► Dashboard feed                │
 │                  │  stream              │                                  │
 │                  │                      │  ENSv2 (Sepolia)                 │
-│                  │                      │  ria-oracle.ria.eth              │
-│                  │                      │  ria-exec.ria.eth                │
+│                  │                      │  oracle.agentria.eth              │
+│                  │                      │  exec.agentria.eth                │
 │                  │                      │                                  │
 │                  │                      │  Next.js Dashboard               │
 │                  │                      │  4 panels, read-only observer    │
@@ -270,10 +270,10 @@ discoverable and composable by other protocols.
 
 | ENS name | Agent | Text records (ENSIP-26) | Access control |
 |---|---|---|---|
-| `ria-recon.ria.eth` | RECON | endpoint, version, capabilities: data-ingestion | RECON only can update |
-| `ria-oracle.ria.eth` | ORACLE | endpoint, version, capabilities: enrichment+payment | ORACLE only can update |
-| `ria-exec.ria.eth` | EXEC | endpoint, version, capabilities: execution-gating | EXEC only can update |
-| `ria-audit.ria.eth` | AUDIT | hcs-topic-id, version, capabilities: audit-logging | AUDIT only can update |
+| `recon.agentria.eth` | RECON | endpoint, version, capabilities: data-ingestion | RECON only can update |
+| `oracle.agentria.eth` | ORACLE | endpoint, version, capabilities: enrichment+payment | ORACLE only can update |
+| `exec.agentria.eth` | EXEC | endpoint, version, capabilities: execution-gating | EXEC only can update |
+| `audit.agentria.eth` | AUDIT | hcs-topic-id, version, capabilities: audit-logging | AUDIT only can update |
 
 ### Real-time dashboard
 
@@ -419,9 +419,9 @@ Environment variables (`GRAPH_API_KEY`, `HEDERA_ACCOUNT_ID`, …) are documented
 | `BLOCKY402_FACILITATOR_URL` | blocky402.com (hosted) or self-hosted, see `hedera-dev/scaffold-hbar`'s `templates/x402-pay-per-use` branch | Free — Blocky402 is open access on Hedera testnet |
 | `HCS_TOPIC_ID` | One-time `HcsLogger.create_topic()` call (`hedera/hcs_logger.py`) | Small fixed Hedera network fee to create |
 | `MCP_SERVER_URL` | Wherever `mcp_server/server.py` is running (default `http://127.0.0.1:8000/mcp`) | n/a — your own server |
-| `ENS_PRIVATE_KEY` | Sepolia wallet with test ETH, owning `ria.eth` | Free from a Sepolia faucet |
+| `ENS_PRIVATE_KEY` | Sepolia wallet with test ETH, owning `agentria.eth` | Free from a Sepolia faucet |
 | `SEPOLIA_RPC_URL` | Infura / Alchemy / a public Sepolia gateway | Free tier |
-| `ENS_RESOLVER_ADDRESS` *(optional)* | `ria.eth`'s ENSv2 Permissioned Resolver proxy — check `sepolia.app.ens.domains/ria.eth` | Falls back to Sepolia's standard `PublicResolver` if unset |
+| `ENS_RESOLVER_ADDRESS` *(optional)* | `agentria.eth`'s ENSv2 Permissioned Resolver proxy — check `sepolia.app.ens.domains/agentria.eth` | Falls back to Sepolia's standard `PublicResolver` if unset |
 
 ## Running Locally
 
@@ -503,7 +503,7 @@ no mocked data — every panel updates during the recording.
 | 1:20–2:00 | ORACLE fires an x402 MCP call | MCP server log shows the call → 402 → payment → execution; Payment Monitor shows the HBAR amount + a live HashScan link |
 | 2:00–2:20 | EXEC dispatches, AUDIT logs | Agent Trace shows the final routing; an HCS Audit Trail entry appears — click the mirror node link live |
 | **2:20–2:40** | **The killer moment — a second agent connects** | A `curl` or Claude Desktop session connects to the MCP server cold, gets a 402, pays HBAR, and receives data back — proof this is a generalized commercial primitive, not a RIA-only trick |
-| 2:40–3:00 | Show ENS identity | ENS app on Sepolia resolves `ria-oracle.ria.eth` with live ENSIP-26 metadata |
+| 2:40–3:00 | Show ENS identity | ENS app on Sepolia resolves `oracle.agentria.eth` with live ENSIP-26 metadata |
 
 The 2:20–2:40 moment is the single most memorable thing to show a judge: it proves the MCP server
 works for *any* AI agent, not just RIA, in about 20 seconds and no judge forgets it.
@@ -548,7 +548,7 @@ works for *any* AI agent, not just RIA, in about 20 seconds and no judge forgets
 |---|---|
 | Built on ENSv2 (Sepolia) | All agent subnames registered on the ENSv2 Sepolia deployment |
 | ENSv2 features central to the product | Permissioned Resolver gives each agent isolated record ownership — core to the identity model |
-| Functional demo, not hard-coded | Live ENS app resolution of `ria-oracle.ria.eth` with ENSIP-26 text records in the demo video |
+| Functional demo, not hard-coded | Live ENS app resolution of `oracle.agentria.eth` with ENSIP-26 text records in the demo video |
 | Extra: AI agent namespace | 4 agents × subnames with ENSIP-26 metadata — endpoint, version, capabilities per agent |
 
 </details>

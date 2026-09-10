@@ -1,4 +1,4 @@
-"""Registers RIA's 4 agent subnames under ria.eth with isolated write access.
+"""Registers RIA's 4 agent subnames under agentria.eth with isolated write access.
 
 Pure orchestration over ens/accounts.py, ens/namehash.py, ens/abi.py and
 ens/resolver.py -- every network call here goes through an injected `rpc`
@@ -66,7 +66,7 @@ def register_subname(
     resolver: PermissionedResolver,
     admin: LocalAccount,
 ) -> SubnameRegistration:
-    """Register one `ria-<agent>.ria.eth` subname and isolate its writes.
+    """Register one `<agent>.agentria.eth` subname and isolate its writes.
 
     1. ENSRegistry.setSubnodeRecord(parent, label, owner=admin, resolver)
        -- creates the subnode, owned by admin, resolved through our

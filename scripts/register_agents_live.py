@@ -9,13 +9,13 @@ confident in the resolver logic.
 
 Preconditions:
   - ENS_PRIVATE_KEY set to a Sepolia wallet's private key, funded from a
-    faucet (e.g. https://sepoliafaucet.com), that already owns `ria.eth`
+    faucet (e.g. https://sepoliafaucet.com), that already owns `agentria.eth`
     on Sepolia (register the parent name yourself first at
     https://sepolia.app.ens.domains if you haven't).
   - SEPOLIA_RPC_URL set to an RPC endpoint (Infura/Alchemy/public gateway).
   - Optionally ENS_RESOLVER_ADDRESS set to the Permissioned Resolver proxy
-    ENSv2 deployed for ria.eth's owner (check
-    https://sepolia.app.ens.domains/ria.eth or
+    ENSv2 deployed for agentria.eth's owner (check
+    https://sepolia.app.ens.domains/agentria.eth or
     https://docs.ens.domains/learn/deployments for the current address --
     ENSv2 deploys these per name-owner via its Verifiable Factory, so
     there's no single fixed constant to hardcode here). If unset, this
@@ -63,7 +63,7 @@ def main() -> int:
         print(
             f"{ENS_PRIVATE_KEY_ENV} is not set. Fund a Sepolia wallet from a "
             "faucet, export its private key as this env var, and make sure "
-            "it owns ria.eth on Sepolia. Stopping -- not registering with a "
+            "it owns agentria.eth on Sepolia. Stopping -- not registering with a "
             "mocked/fake key."
         )
         return 1
@@ -79,8 +79,8 @@ def main() -> int:
             "WARNING: ENS_RESOLVER_ADDRESS is not set -- falling back to the "
             f"Sepolia PublicResolver default ({DEFAULT_PUBLIC_RESOLVER_ADDRESS}). "
             "ENSv2 deploys a fresh Permissioned Resolver proxy per name owner, "
-            "so ria.eth's real one may differ -- confirm at "
-            "https://sepolia.app.ens.domains/ria.eth before proceeding, or set "
+            "so agentria.eth's real one may differ -- confirm at "
+            "https://sepolia.app.ens.domains/agentria.eth before proceeding, or set "
             "ENS_RESOLVER_ADDRESS explicitly.\n"
         )
 

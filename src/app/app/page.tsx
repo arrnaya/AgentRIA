@@ -29,10 +29,10 @@ const trace = [
 ];
 
 const identities = [
-  "ria-recon.ria.eth",
-  "ria-oracle.ria.eth",
-  "ria-exec.ria.eth",
-  "ria-audit.ria.eth",
+  "recon.agentria.eth",
+  "oracle.agentria.eth",
+  "exec.agentria.eth",
+  "audit.agentria.eth",
 ];
 
 export default function Dashboard() {
@@ -251,7 +251,7 @@ export default function Dashboard() {
           <Card>
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-ink">Agent Identity — ENSv2 (Sepolia)</p>
-              <span className="text-xs text-ink-faint">ria.eth</span>
+              <span className="text-xs text-ink-faint">agentria.eth</span>
             </div>
             <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {identities.map((id) => (

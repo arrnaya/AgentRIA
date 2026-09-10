@@ -7,8 +7,8 @@ from ens.resolver import PermissionedResolver, ResolverPermissionError
 from tests.fake_chain import ChainRevert, FakeChain
 
 ADMIN_KEY = "0x" + "aa" * 32
-ORACLE_NODE = namehash("ria-oracle.ria.eth")
-EXEC_NODE = namehash("ria-exec.ria.eth")
+ORACLE_NODE = namehash("oracle.agentria.eth")
+EXEC_NODE = namehash("exec.agentria.eth")
 
 
 def _setup():
@@ -60,9 +60,9 @@ def test_set_text_by_approved_operator_succeeds():
     oracle_agent = Account.from_key(b"\x01" * 32)
     resolver.grant_operator(ORACLE_NODE, oracle_agent.address, signer=admin)
 
-    resolver.set_text(ORACLE_NODE, "endpoint", "https://oracle.ria.eth.example", signer=oracle_agent)
+    resolver.set_text(ORACLE_NODE, "endpoint", "https://oracle.agentria.eth.example", signer=oracle_agent)
 
-    assert resolver.text(ORACLE_NODE, "endpoint") == "https://oracle.ria.eth.example"
+    assert resolver.text(ORACLE_NODE, "endpoint") == "https://oracle.agentria.eth.example"
 
 
 def test_exec_cannot_overwrite_oracles_records():
@@ -101,8 +101,8 @@ def test_exec_cannot_overwrite_oracles_records():
     # ORACLE's record is untouched either way.
     assert resolver.text(ORACLE_NODE, "endpoint") == ""
     # EXEC's own node, meanwhile, works fine for EXEC.
-    resolver.set_text(EXEC_NODE, "endpoint", "https://exec.ria.eth.example", signer=exec_agent)
-    assert resolver.text(EXEC_NODE, "endpoint") == "https://exec.ria.eth.example"
+    resolver.set_text(EXEC_NODE, "endpoint", "https://exec.agentria.eth.example", signer=exec_agent)
+    assert resolver.text(EXEC_NODE, "endpoint") == "https://exec.agentria.eth.example"
 
 
 def test_operator_approved_for_all_is_also_honoured():

@@ -14,7 +14,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 
-PARENT_NAME = "ria.eth"
+PARENT_NAME = "agentria.eth"
 
 # ENSIP-26 text record keys. "version" and "capabilities" are free-form per
 # the README table; AUDIT additionally carries "hcs-topic-id" once the
@@ -39,7 +39,7 @@ class AgentIdentity:
     """One row of the fixed subname table."""
 
     agent_id: str  # short id used across the codebase, e.g. "oracle"
-    label: str  # ENS label, e.g. "ria-oracle" -> ria-oracle.ria.eth
+    label: str  # ENS label, e.g. "oracle" -> oracle.agentria.eth
     capabilities: str
     extra_records: dict[str, str] = field(default_factory=dict)
 
@@ -72,12 +72,12 @@ _AUDIT_HCS_TOPIC_ID = os.environ.get("RIA_AUDIT_HCS_TOPIC_ID", "pending-hcs-topi
 SUBNAME_TABLE: dict[str, AgentIdentity] = {
     identity.agent_id: identity
     for identity in (
-        AgentIdentity("recon", "ria-recon", "data-ingestion"),
-        AgentIdentity("oracle", "ria-oracle", "enrichment+payment"),
-        AgentIdentity("exec", "ria-exec", "execution-gating"),
+        AgentIdentity("recon", "recon", "data-ingestion"),
+        AgentIdentity("oracle", "oracle", "enrichment+payment"),
+        AgentIdentity("exec", "exec", "execution-gating"),
         AgentIdentity(
             "audit",
-            "ria-audit",
+            "audit",
             "audit-logging",
             extra_records={KEY_HCS_TOPIC_ID: _AUDIT_HCS_TOPIC_ID},
         ),
@@ -94,9 +94,9 @@ SUBNAME_TABLE: dict[str, AgentIdentity] = {
 # Resolver" / "Enhanced Access Control" (per-record, per-node delegate
 # approval rather than a single shared operator). ENSv2 deploys a fresh
 # Permissioned Resolver proxy per name *owner* (via its Verifiable
-# Factory), so there is no single fixed address to hardcode for `ria.eth`
-# — set ENS_RESOLVER_ADDRESS once you know it (check
-# https://sepolia.app.ens.domains/ria.eth or docs.ens.domains/learn/deployments
+# Factory), so there is no single fixed address to hardcode for
+# `agentria.eth` — set ENS_RESOLVER_ADDRESS once you know it (check
+# https://sepolia.app.ens.domains/agentria.eth or docs.ens.domains/learn/deployments
 # for the current one) and this module resolves to it; PublicResolver
 # below is the safe, well-tested fallback default so the live script has
 # somewhere real to point at even before that address is confirmed.

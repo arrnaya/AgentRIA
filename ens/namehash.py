@@ -14,7 +14,7 @@ ZERO_NODE = b"\x00" * 32
 
 
 def namehash(name: str) -> bytes:
-    """Compute the ENS namehash of a dotted name, e.g. "ria-oracle.ria.eth".
+    """Compute the ENS namehash of a dotted name, e.g. "oracle.agentria.eth".
 
     namehash("") == ZERO_NODE (the root node); every other name recurses
     through its labels right-to-left, matching EIP-137.
@@ -27,5 +27,5 @@ def namehash(name: str) -> bytes:
 
 
 def labelhash(label: str) -> bytes:
-    """Hash of a single label (the part between dots), e.g. "ria-oracle"."""
+    """Hash of a single label (the part between dots), e.g. "oracle"."""
     return keccak(text=label)

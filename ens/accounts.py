@@ -1,7 +1,7 @@
 """Signing accounts: one funded admin wallet, four derived agent wallets.
 
 RIA only asks the operator to fund and hold one Sepolia wallet
-(`ENS_PRIVATE_KEY`) — it owns `ria.eth` and pays gas. Each of the 4 agents
+(`ENS_PRIVATE_KEY`) — it owns `agentria.eth` and pays gas. Each of the 4 agents
 still needs its *own* distinct signing key though, because the whole point
 of the Permissioned Resolver check in resolver.py is that a write is
 authorised by *whose key signed it*, not by an `agent_id` string the caller
@@ -36,7 +36,7 @@ def has_admin_key() -> bool:
 
 
 def load_admin_account() -> LocalAccount:
-    """Load the funded Sepolia wallet that owns `ria.eth` and pays gas.
+    """Load the funded Sepolia wallet that owns `agentria.eth` and pays gas.
 
     Raises MissingCredentialError rather than falling back to a mocked key
     — a live-looking registration against a fake account is worse than no
@@ -47,7 +47,7 @@ def load_admin_account() -> LocalAccount:
         raise MissingCredentialError(
             f"{ENS_PRIVATE_KEY_ENV} is not set. Fund a Sepolia wallet from a "
             "faucet, export its private key as this env var, and make sure "
-            "it owns ria.eth on Sepolia before running ens/register.py live. "
+            "it owns agentria.eth on Sepolia before running ens/register.py live. "
             "See README.md > Environment Variables."
         )
     return Account.from_key(private_key)

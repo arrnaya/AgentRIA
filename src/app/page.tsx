@@ -95,7 +95,7 @@ const verifications = [
   },
   {
     label: "ENS identity",
-    detail: "ENS app on Sepolia resolves ria-oracle.ria.eth with live ENSIP-26 text records.",
+    detail: "ENS app on Sepolia resolves oracle.agentria.eth with live ENSIP-26 text records.",
   },
 ];
 

@@ -25,7 +25,7 @@ def test_register_subname_writes_all_records_for_one_agent():
 
     result = register_subname(identity, rpc=chain, resolver=resolver, admin=admin)
 
-    assert result.name == "ria-oracle.ria.eth"
+    assert result.name == "oracle.agentria.eth"
     assert result.agent_id == "oracle"
     for key, value in identity.text_records().items():
         assert resolver.text(result.node, key) == value
@@ -52,10 +52,10 @@ def test_register_all_registers_the_fixed_four_agent_table():
     assert agent_ids == {"recon", "oracle", "exec", "audit"}
     names = {r.name for r in registrations}
     assert names == {
-        "ria-recon.ria.eth",
-        "ria-oracle.ria.eth",
-        "ria-exec.ria.eth",
-        "ria-audit.ria.eth",
+        "recon.agentria.eth",
+        "oracle.agentria.eth",
+        "exec.agentria.eth",
+        "audit.agentria.eth",
     }
     # every agent got its own distinct operator address
     operators = {r.operator_address for r in registrations}
