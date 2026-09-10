@@ -1,16 +1,31 @@
-# Day 1 — data layer (RECON + Subgraph Studio client)
+# Data layer (RECON + Subgraph Studio client)
 httpx>=0.27
 python-dotenv>=1.0
+
+# Intelligence layer (SCOUT / RISK / EXEC / pipeline)
+langgraph>=1.2
+anthropic>=1.4
+websockets>=16.0
+
+# MCP server (pinned <2: mcp 2.x renamed FastMCP -> MCPServer and changed the
+# server API; FastMCP on 1.x is what the ecosystem's docs/examples target)
+mcp[cli]<2
+
+# Hedera (x402 payments, HCS, wallet)
+# NOTE: the `x402` PyPI package (verified v2.22.0) ships NO Hedera scheme —
+# extras are only evm/svm/tvm/fastapi/flask/etc, and there is no separate
+# `x402-hedera` package. Its generic protocol types (x402.facilitator_base:
+# PaymentRequirements, VerifyResponse, SettleResponse, SupportedResponse) are
+# still useful as the wire-format shape, but the actual Hedera transfer +
+# Blocky402 integration is hand-rolled on top of hiero-sdk-python — see
+# hedera/x402_client.py and mcp_server/x402_middleware.py.
+x402>=2.22
+hiero-sdk-python>=0.2
 
 # Testing
 pytest>=8.0
 pytest-asyncio>=0.24
 respx>=0.21
 
-# Added as each subsequent agent lands (see README > Build Timeline):
-# langgraph            — pipeline/graph.py (Day 2)
-# anthropic            — LLM tool-calling across agents (Day 2)
-# fastmcp               — mcp_server/server.py (Day 3)
-# x402[hedera]         — hedera/x402_client.py, mcp_server x402 middleware (Day 3)
-# hiero-sdk-python      — hedera/wallet.py, hedera/hcs_logger.py (Day 3-4)
-# websockets            — pipeline/ws_server.py (Day 2)
+# Added when built (see README > Build Timeline):
+# ens (web3.py or similar) — ens/register.py, ens/resolver.py
