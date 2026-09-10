@@ -126,6 +126,29 @@ def main() -> int:
         return 1
 
     admin = load_admin_account()
+
+    # Pre-flight: a stuck unconfirmed transaction from a previous run would
+    # otherwise block every transaction this run tries to send behind it
+    # (EVM nonces are strictly sequential) -- confirmed against a real
+    # failure: an earlier run's transaction was broadcast, logged as
+    # "deployed", but never actually landed on-chain (an RPC provider
+    # rejected the *next* transaction with an in-flight-limit policy error
+    # before this script waited for confirmations; ens/rpc.py's
+    # build_and_send now does). Check before spending any more gas.
+    confirmed_nonce = rpc.get_transaction_count(admin.address, "latest")
+    pending_nonce = rpc.get_transaction_count(admin.address, "pending")
+    if pending_nonce != confirmed_nonce:
+        print(
+            f"\n{admin.address} has {pending_nonce - confirmed_nonce} unconfirmed "
+            f"transaction(s) already in flight (confirmed nonce {confirmed_nonce}, "
+            f"pending nonce {pending_nonce}). Sending more right now would queue "
+            "behind them. Wait for the pending one(s) to confirm (check "
+            f"https://sepolia.etherscan.io/address/{admin.address}) or clear them "
+            "(e.g. a 0-value self-transfer at the same nonce with a higher gas "
+            "price) before re-running this script."
+        )
+        return 1
+
     root_registry = PermissionedRegistryClient(rpc=rpc, address=ENS_ETH_REGISTRY_ADDRESS)
 
     subregistry = ensure_subregistry(rpc, root_registry, admin, override_address=subregistry_override)

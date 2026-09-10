@@ -107,35 +107,57 @@ def ensure_subregistry(
     *,
     override_address: str | None = None,
 ) -> PermissionedRegistryClient:
-    """Return agentria.eth's subregistry, deploying one if it doesn't
-    exist yet. Checks (in order): an explicit override (e.g.
-    RIA_SUBREGISTRY_ADDRESS, for reusing a proxy from a previous run),
-    then a live getSubregistry("agentria") lookup, then deploys a fresh
-    UserRegistry proxy via VerifiableFactory and set_subregistry()s it
-    onto agentria.eth's root-registry entry."""
-    if override_address:
-        return PermissionedRegistryClient(rpc=rpc, address=override_address)
+    """Return agentria.eth's subregistry, attached to its root-registry
+    entry -- deploying and/or attaching one as needed.
 
+    Always checks live attachment first (getSubregistry("agentria")),
+    regardless of `override_address` -- deploying a proxy and attaching it
+    are two separate transactions, and if a previous run's process died,
+    crashed, or hit a transient RPC error between them (this has happened
+    in practice: an in-flight-transaction-limit rejection from a provider
+    on the *second* call), the proxy exists on-chain but agentria.eth
+    still doesn't point at it. An earlier version of this function
+    trusted `override_address` to mean "already fully done" and returned
+    immediately without checking -- which would have silently left the
+    subregistry unattached and every subname registered into it
+    unresolvable via standard ENS resolution. Re-running this function is
+    always safe: it never re-deploys (or re-attaches) something that's
+    already live.
+
+    `override_address` only controls whether a *new* proxy gets deployed
+    if none is attached yet: pass the address from a previous run's
+    (possibly interrupted) deployment (e.g. RIA_SUBREGISTRY_ADDRESS) to
+    reuse it -- required if that deployment already happened, since
+    VerifiableFactory's CREATE2 deployment reverts the second time for the
+    same (signer, salt) pair. Omit it to deploy fresh.
+    """
     existing = root_registry.get_subregistry(PARENT_LABEL)
     if existing.lower() != ZERO_ADDRESS.lower():
-        logger.info("subregistry: reusing existing one for %s: %s", PARENT_NAME, existing)
+        logger.info("subregistry: already attached for %s: %s", PARENT_NAME, existing)
         return PermissionedRegistryClient(rpc=rpc, address=existing)
 
-    init_data = USER_REGISTRY_INITIALIZE_FN.encode_call(admin.address, SUBREGISTRY_ADMIN_ROLE_BITMAP)
-    new_address = deploy_proxy(
-        rpc,
-        ENS_VERIFIABLE_FACTORY_ADDRESS,
-        ENS_USER_REGISTRY_IMPL_ADDRESS,
-        _SUBREGISTRY_SALT,
-        init_data,
-        signer=admin,
-    )
-    logger.info("subregistry: deployed a new one for %s at %s", PARENT_NAME, new_address)
+    if override_address:
+        address = override_address
+        logger.info(
+            "subregistry: using override %s for %s (not yet attached on-chain -- attaching now)",
+            address, PARENT_NAME,
+        )
+    else:
+        init_data = USER_REGISTRY_INITIALIZE_FN.encode_call(admin.address, SUBREGISTRY_ADMIN_ROLE_BITMAP)
+        address = deploy_proxy(
+            rpc,
+            ENS_VERIFIABLE_FACTORY_ADDRESS,
+            ENS_USER_REGISTRY_IMPL_ADDRESS,
+            _SUBREGISTRY_SALT,
+            init_data,
+            signer=admin,
+        )
+        logger.info("subregistry: deployed a new one for %s at %s", PARENT_NAME, address)
 
-    root_registry.set_subregistry(label_id(PARENT_LABEL), new_address, signer=admin)
+    root_registry.set_subregistry(label_id(PARENT_LABEL), address, signer=admin)
     logger.info("subregistry: attached to %s's root-registry entry", PARENT_NAME)
 
-    return PermissionedRegistryClient(rpc=rpc, address=new_address)
+    return PermissionedRegistryClient(rpc=rpc, address=address)
 
 
 def ensure_resolver(

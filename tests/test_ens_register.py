@@ -43,6 +43,53 @@ def test_ensure_subregistry_reuses_an_existing_one():
     assert again.address.lower() == subregistry.address.lower()
 
 
+def test_ensure_subregistry_attaches_a_deployed_but_unattached_override():
+    """Regression test for a real failure: register_agents_live.py deployed
+    a subregistry, then the very next transaction (attaching it to
+    agentria.eth) was rejected by the RPC provider before broadcast (an
+    Infura "in-flight transaction limit" policy error) -- leaving a real,
+    live subregistry that agentria.eth's registry entry still didn't point
+    at. An earlier version of ensure_subregistry() trusted `override_address`
+    to mean "already fully done" and would have returned without attaching
+    it, silently leaving every subname unresolvable. It must always attach
+    on re-run if it isn't attached yet, override or not."""
+    chain = FakeChain()
+    admin = Account.from_key(ADMIN_KEY)
+    chain.seed_agentria(admin.address, expiry=FUTURE_EXPIRY)
+    root_registry = PermissionedRegistryClient(rpc=chain, address=ENS_ETH_REGISTRY_ADDRESS)
+
+    # Deploy a subregistry directly, bypassing ensure_subregistry() entirely
+    # -- so it exists on-chain but is NOT attached, exactly the stuck state
+    # a partially-completed live run leaves behind.
+    from ens.constants import ENS_USER_REGISTRY_IMPL_ADDRESS, ENS_VERIFIABLE_FACTORY_ADDRESS, SUBREGISTRY_ADMIN_ROLE_BITMAP
+    from ens.factory import deploy_proxy
+    from ens.registry import USER_REGISTRY_INITIALIZE_FN
+
+    init_data = USER_REGISTRY_INITIALIZE_FN.encode_call(admin.address, SUBREGISTRY_ADMIN_ROLE_BITMAP)
+    deployed_address = deploy_proxy(
+        chain, ENS_VERIFIABLE_FACTORY_ADDRESS, ENS_USER_REGISTRY_IMPL_ADDRESS, 999, init_data, signer=admin
+    )
+    assert root_registry.get_subregistry("agentria").lower() == "0x" + "00" * 20  # confirm: not attached yet
+
+    result = ensure_subregistry(chain, root_registry, admin, override_address=deployed_address)
+
+    assert result.address.lower() == deployed_address.lower()
+    assert root_registry.get_subregistry("agentria").lower() == deployed_address.lower()
+
+
+def test_ensure_subregistry_override_is_a_noop_once_already_attached():
+    """The common case on a clean re-run: nothing to do, and it must not
+    attempt a second set_subregistry call (which would be a redundant, but
+    harmless, transaction) -- verified by asserting the returned address
+    is exactly the already-attached one even when a *different* stray
+    override is passed, proving the live lookup wins over the override."""
+    chain, admin, root_registry, subregistry, resolver = _setup()
+
+    again = ensure_subregistry(chain, root_registry, admin, override_address="0x" + "ab" * 20)
+
+    assert again.address.lower() == subregistry.address.lower()
+
+
 def test_ensure_resolver_does_not_redeploy_when_reused_via_override():
     chain, admin, root_registry, subregistry, resolver = _setup()
     again = ensure_resolver(chain, admin, override_address=resolver.address)

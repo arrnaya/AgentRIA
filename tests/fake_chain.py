@@ -188,6 +188,16 @@ class FakeChain:
     def get_transaction_count(self, address: str) -> int:
         return self._nonces.get(address.lower(), 0)
 
+    def get_transaction_receipt(self, tx_hash: str) -> dict[str, str] | None:
+        # send_raw_transaction executes synchronously and raises (rather
+        # than returning a hash) on any on-chain-style failure -- so any
+        # hash this fake ever handed back already represents a mined,
+        # successful transaction. "Mined on the very first poll" is a
+        # faithful enough model of that for ens/rpc.py's wait_for_receipt()
+        # to exercise the same code path tests already cover, without this
+        # fake needing to simulate confirmation delay.
+        return {"status": "0x1", "transactionHash": tx_hash, "blockNumber": "0x1"}
+
     def gas_price(self) -> int:
         return 1_000_000_000
 
