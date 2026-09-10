@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Logomark, Wordmark } from "@/components/Brand";
 import { Card, Pill } from "@/components/ui";
+import { useRiaSocket, type SignalEvent } from "@/hooks/useRiaSocket";
 
 const tabs = [
   { href: "#overview", label: "Overview" },
@@ -11,7 +14,10 @@ const tabs = [
   { href: "#identity", label: "Identity" },
 ];
 
-const opportunities = [
+// Static illustrative data — shown only when the panel hasn't received a
+// real event of its type yet (see `useRiaSocket`'s `live` flags below).
+// Once a panel goes live, its real feed replaces this entirely.
+const mockOpportunities = [
   { protocol: "Uniswap v3", pair: "ETH / USDC", type: "Yield gap", confidence: 0.82, time: "12s ago", tone: "sky" as const },
   { protocol: "Aave v3", pair: "USDC market", type: "Liquidation proximity", confidence: 0.74, time: "48s ago", tone: "blush" as const },
   { protocol: "Compound v3", pair: "USDC market", type: "Rate divergence", confidence: 0.71, time: "1m ago", tone: "mint" as const },
@@ -19,7 +25,7 @@ const opportunities = [
   { protocol: "Aave v3", pair: "wstETH", type: "Collateral ratio drift", confidence: 0.58, time: "6m ago", tone: "lavender" as const },
 ];
 
-const trace = [
+const mockTrace = [
   { name: "RECON", status: "Complete", note: "Pulled 4 opportunity signals from Subgraph Studio" },
   { name: "SCOUT", status: "Complete", note: "Ranked signals — top spread 2.3% APY" },
   { name: "RISK", status: "Routed → ORACLE", note: "Confidence 0.71, above 0.65 threshold" },
@@ -27,6 +33,56 @@ const trace = [
   { name: "EXEC", status: "Waiting", note: "Gated on ORACLE enrichment" },
   { name: "AUDIT", status: "Waiting", note: "Logs to HCS after EXEC completes" },
 ];
+
+const AGENT_ORDER = ["RECON", "SCOUT", "RISK", "ORACLE", "EXEC", "AUDIT"] as const;
+
+// Mirrors ws_server.py's _TYPE_LABELS keys (pipeline/state.py's SignalType
+// values) to the same tone-per-type associations the original mock used.
+const TONE_BY_SIGNAL_TYPE: Record<string, "lavender" | "mint" | "butter" | "blush" | "sky"> = {
+  yield_gap: "sky",
+  liquidation_proximity: "blush",
+  rate_divergence: "mint",
+  pool_imbalance: "butter",
+  collateral_drift: "lavender",
+};
+
+function toneForSignal(type: string): "lavender" | "mint" | "butter" | "blush" | "sky" {
+  return TONE_BY_SIGNAL_TYPE[type] ?? "lavender";
+}
+
+function relativeTime(iso: string): string {
+  const then = Date.parse(iso);
+  if (Number.isNaN(then)) return "—";
+  const seconds = Math.max(0, Math.round((Date.now() - then) / 1000));
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  return `${hours}h ago`;
+}
+
+function LiveBadge({ live }: { live: boolean }) {
+  return live ? (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-mint px-2.5 py-1 text-[11px] font-medium text-mint-deep">
+      <span className="h-1.5 w-1.5 rounded-full bg-mint-deep" /> LIVE
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-butter px-2.5 py-1 text-[11px] font-medium text-[#7a5c14]">
+      <span className="h-1.5 w-1.5 rounded-full bg-butter-deep" /> PREVIEW
+    </span>
+  );
+}
+
+function signalToRow(s: SignalEvent) {
+  return {
+    protocol: s.protocol,
+    pair: s.pair,
+    type: s.type_label,
+    confidence: s.confidence,
+    time: relativeTime(s.observed_at),
+    tone: toneForSignal(s.type),
+  };
+}
 
 // Live on Sepolia — registered via scripts/register_agents_live.py,
 // isolation verified on-chain (verify_isolation()). Not mock data: these
@@ -39,6 +95,33 @@ const identities = [
 ];
 
 export default function Dashboard() {
+  const { status, trace: liveTrace, signals, payments, audits, live } = useRiaSocket();
+
+  const displayOpportunities = live.signals ? signals.map(signalToRow) : mockOpportunities;
+
+  const liveTraceByName = new Map(
+    [...liveTrace].reverse().map((t) => [t.name, t] as const),
+  );
+  const displayTrace = live.trace
+    ? AGENT_ORDER.map(
+        (name) =>
+          liveTraceByName.get(name) ?? {
+            name,
+            status: "Not yet reported",
+            note: "No TRACE event from this agent yet this run.",
+          },
+      )
+    : mockTrace;
+
+  const latestPayment = payments[0];
+  const latestAudits = audits.slice(0, 3);
+
+  const pipelineLabel =
+    status === "open" ? "Pipeline: Connected" : status === "connecting" ? "Pipeline: Connecting…" : "Pipeline: Not connected";
+  const pipelineDot = status === "open" ? "bg-mint-deep" : status === "connecting" ? "bg-sky-deep" : "bg-butter-deep";
+
+  const liveCount = Object.values(live).filter(Boolean).length;
+
   return (
     <div className="flex-1 bg-paper">
       {/* HERO HEADER */}
@@ -51,8 +134,8 @@ export default function Dashboard() {
           </Link>
           <div className="flex items-center gap-3">
             <span className="hidden items-center gap-1.5 rounded-full border border-paper/15 px-3 py-1.5 text-xs text-paper/60 sm:inline-flex">
-              <span className="h-1.5 w-1.5 rounded-full bg-butter-deep" />
-              Pipeline: Pre-launch
+              <span className={`h-1.5 w-1.5 rounded-full ${pipelineDot}`} />
+              {pipelineLabel}
             </span>
             <a
               href="https://github.com/arrnaya/AgentRIA"
@@ -78,9 +161,18 @@ export default function Dashboard() {
         {/* PREVIEW BANNER */}
         <div className="flex flex-col gap-1 rounded-2xl border border-butter-deep/40 bg-butter px-5 py-4 text-sm text-[#6b4f10] shadow-[0_12px_30px_-18px_rgba(23,21,34,0.35)] sm:flex-row sm:items-center sm:justify-between">
           <p>
-            <span className="font-medium">Partially live.</span> Agent Identity below is real,
-            on-chain, and verified — everything else illustrates the finished dashboard until the
-            live pipeline connects.
+            <span className="font-medium">Partially live.</span> Agent Identity is real, on-chain,
+            and verified. Opportunities, Agent Trace, Payment Monitor, and HCS Audit Trail each
+            connect to RIA&rsquo;s WebSocket pipeline (
+            <code className="rounded bg-black/5 px-1 py-0.5 text-[11px]">pipeline/runner.py --ws-port 3001</code>
+            ) and switch from illustrative preview data to real events the moment that panel
+            receives its first one — watch for the <span className="font-medium">LIVE</span> badge
+            on each panel below.{" "}
+            {liveCount > 0 ? (
+              <span className="font-medium">{liveCount} of 4 event-driven panels are live right now.</span>
+            ) : (
+              <span>No pipeline is connected right now ({pipelineLabel.toLowerCase()}), so those four panels are showing preview data.</span>
+            )}
           </p>
           <a href="https://github.com/arrnaya/AgentRIA" className="shrink-0 font-medium underline underline-offset-2">
             Follow build progress →
@@ -152,11 +244,14 @@ export default function Dashboard() {
           <Card id="opportunities" className="scroll-mt-24 !p-0">
             <div className="flex items-center justify-between px-6 pt-5">
               <p className="text-sm font-medium text-ink">Opportunities Feed</p>
-              <span className="text-xs text-ink-faint">SCOUT</span>
+              <div className="flex items-center gap-2">
+                <LiveBadge live={live.signals} />
+                <span className="text-xs text-ink-faint">SCOUT</span>
+              </div>
             </div>
             <div className="mt-3 divide-y divide-line">
-              {opportunities.map((o) => (
-                <div key={o.protocol + o.type} className="px-6 py-4">
+              {displayOpportunities.map((o, i) => (
+                <div key={live.signals ? `${o.protocol}-${o.type}-${i}` : o.protocol + o.type} className="px-6 py-4">
                   <div className="flex items-center justify-between">
                     <Pill tone={o.tone}>{o.protocol}</Pill>
                     <span className="text-xs text-ink-faint">{o.time}</span>
@@ -173,12 +268,15 @@ export default function Dashboard() {
 
           {/* Agent Trace */}
           <Card id="trace" className="scroll-mt-24 flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-lavender text-xs">◎</span>
-              <p className="text-sm font-medium text-ink">Proactive Intelligence Engine</p>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-lavender text-xs">◎</span>
+                <p className="text-sm font-medium text-ink">Proactive Intelligence Engine</p>
+              </div>
+              <LiveBadge live={live.trace} />
             </div>
             <div className="mt-4 space-y-2">
-              {trace.map((t) => (
+              {displayTrace.map((t) => (
                 <div key={t.name} className="rounded-xl bg-paper px-4 py-3">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium text-ink">{t.name}</span>
@@ -215,36 +313,88 @@ export default function Dashboard() {
           {/* Payments + Audit */}
           <div className="flex flex-col gap-4">
             <Card id="payments" className="scroll-mt-24">
-              <p className="text-sm font-medium text-ink">Payment Monitor</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-ink">Payment Monitor</p>
+                <LiveBadge live={live.payments} />
+              </div>
               <div className="mt-4 flex h-12 items-end gap-1">
                 {[5, 8, 6, 11, 7, 13, 9, 6, 10, 8].map((h, i) => (
                   <span key={i} className="w-full rounded-full bg-blush-deep/70" style={{ height: `${h * 3}px` }} />
                 ))}
               </div>
-              <dl className="mt-4 space-y-2 text-xs">
-                <div className="flex justify-between"><dt className="text-ink-faint">Tool</dt><dd className="font-mono text-ink-soft">get_risk_score()</dd></div>
-                <div className="flex justify-between"><dt className="text-ink-faint">Amount</dt><dd className="font-mono text-ink-soft">0.002 HBAR</dd></div>
-                <div className="flex justify-between"><dt className="text-ink-faint">Facilitator</dt><dd className="text-ink-soft">Blocky402</dd></div>
-                <div className="flex justify-between"><dt className="text-ink-faint">Tx</dt><dd className="font-mono text-ink-faint">awaiting first call</dd></div>
-              </dl>
-              <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-blush px-3 py-1 text-xs text-[#8a3f5f]">
-                <span className="h-1.5 w-1.5 rounded-full bg-blush-deep" /> Standing by
-              </span>
+              {live.payments && latestPayment ? (
+                <>
+                  <dl className="mt-4 space-y-2 text-xs">
+                    <div className="flex justify-between"><dt className="text-ink-faint">Tool</dt><dd className="font-mono text-ink-soft">{latestPayment.tool ?? "—"}</dd></div>
+                    <div className="flex justify-between"><dt className="text-ink-faint">Amount</dt><dd className="font-mono text-ink-soft">{latestPayment.amount_hbar != null ? `${latestPayment.amount_hbar} HBAR` : "—"}</dd></div>
+                    <div className="flex justify-between"><dt className="text-ink-faint">Facilitator</dt><dd className="text-ink-soft">{latestPayment.facilitator}</dd></div>
+                    <div className="flex justify-between"><dt className="text-ink-faint">Tx</dt><dd className="font-mono text-ink-faint">{latestPayment.tx_id ?? "pending"}</dd></div>
+                  </dl>
+                  <span
+                    className={`mt-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs ${
+                      latestPayment.status === "confirmed" ? "bg-mint text-mint-deep" : "bg-blush text-[#8a3f5f]"
+                    }`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${latestPayment.status === "confirmed" ? "bg-mint-deep" : "bg-blush-deep"}`} />
+                    {latestPayment.status === "confirmed" ? "Confirmed on Hedera" : "Pending"}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <dl className="mt-4 space-y-2 text-xs">
+                    <div className="flex justify-between"><dt className="text-ink-faint">Tool</dt><dd className="font-mono text-ink-soft">get_risk_score()</dd></div>
+                    <div className="flex justify-between"><dt className="text-ink-faint">Amount</dt><dd className="font-mono text-ink-soft">0.002 HBAR</dd></div>
+                    <div className="flex justify-between"><dt className="text-ink-faint">Facilitator</dt><dd className="text-ink-soft">Blocky402</dd></div>
+                    <div className="flex justify-between"><dt className="text-ink-faint">Tx</dt><dd className="font-mono text-ink-faint">awaiting first call</dd></div>
+                  </dl>
+                  <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-blush px-3 py-1 text-xs text-[#8a3f5f]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-blush-deep" /> Standing by
+                  </span>
+                </>
+              )}
             </Card>
 
             <Card id="audit" className="scroll-mt-24 flex-1">
-              <p className="text-sm font-medium text-ink">HCS Audit Trail</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-ink">HCS Audit Trail</p>
+                <LiveBadge live={live.audits} />
+              </div>
               <div className="mt-4 space-y-3 text-xs">
-                <div className="rounded-xl bg-paper px-4 py-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-mint-deep">PREVIEW</span>
-                    <span className="text-ink-faint">—</span>
+                {live.audits && latestAudits.length > 0 ? (
+                  latestAudits.map((a, i) => (
+                    <div key={`${a.action}-${a.logged_at}-${i}`} className="rounded-xl bg-paper px-4 py-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-mint-deep">{a.action}</span>
+                        <span className="text-ink-faint">{relativeTime(a.logged_at)}</span>
+                      </div>
+                      <p className="mt-1 text-ink-soft">{a.note || "Logged to HCS."}</p>
+                      {a.tx_id ? (
+                        <p className="mt-1 font-mono text-[11px] text-ink-faint">{a.tx_id}</p>
+                      ) : null}
+                      {a.hcs_topic_id ? (
+                        <a
+                          href={`https://hashscan.io/testnet/topic/${a.hcs_topic_id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-1 inline-block text-[11px] text-lavender-deep underline underline-offset-2"
+                        >
+                          View on HashScan mirror node →
+                        </a>
+                      ) : null}
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-xl bg-paper px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-mint-deep">PREVIEW</span>
+                      <span className="text-ink-faint">—</span>
+                    </div>
+                    <p className="mt-1 text-ink-soft">
+                      Awaiting first EXEC cycle. Once live, every action + payment hash logs here
+                      with a Hedera mirror node link.
+                    </p>
                   </div>
-                  <p className="mt-1 text-ink-soft">
-                    Awaiting first EXEC cycle. Once live, every action + payment hash logs here
-                    with a Hedera mirror node link.
-                  </p>
-                </div>
+                )}
               </div>
             </Card>
           </div>
