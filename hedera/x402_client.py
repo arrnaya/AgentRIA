@@ -31,11 +31,18 @@ contract verified against x402-foundation/x402's
      what AUDIT logs to HCS via `hedera/hcs_logger.py`.
 
 Note on transport: `mcp_server/server.py` defaults to SSE per README's
-"HTTP/SSE mode", but SSE's session handshake doesn't fit a simple
-402-then-retry request/response exchange. This client targets a plain
-JSON-RPC POST endpoint (run the server with `MCP_TRANSPORT=streamable-http`
-for this client to work against it) rather than re-implementing MCP's full
-session protocol — out of scope for a payment-flow demo.
+"HTTP/SSE mode" (run the server with `MCP_TRANSPORT=streamable-http` for
+this client to work against it). Confirmed live against FastMCP's actual
+streamable-http implementation (`mcp.server.streamable_http`), this
+transport still requires its own session handshake even outside SSE's
+GET-stream model: every POST must carry an `Accept: application/json,
+text/event-stream` header (else HTTP 406) and, after an `initialize` call,
+an `Mcp-Session-Id` header matching what `initialize`'s response returned
+(else HTTP 400 "Missing session ID"). Responses come back SSE-framed
+(`content-type: text/event-stream`, body `event: message\ndata: {...}`) by
+default, not plain JSON. `_ensure_session` and `_parse_response_body`
+implement exactly this — the minimum needed for a single request/response
+exchange, not the full bidirectional SSE streaming session model.
 """
 
 from __future__ import annotations
@@ -44,7 +51,7 @@ import base64
 import itertools
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
@@ -57,7 +64,12 @@ logger = logging.getLogger("ria.x402_client")
 X402_VERSION = 2
 PAYMENT_HEADER = "X-PAYMENT"
 SETTLEMENT_HEADER = "X-PAYMENT-RESPONSE"
+SESSION_HEADER = "Mcp-Session-Id"
 TINYBARS_PER_HBAR = 100_000_000
+
+# Streamable-http rejects any request that doesn't advertise both -- see
+# this module's docstring.
+ACCEPT_HEADER = "application/json, text/event-stream"
 
 _request_id_counter = itertools.count(1)
 
@@ -83,6 +95,7 @@ class X402Client:
     wallet: HederaWallet
     mcp_url: str
     http_client: httpx.AsyncClient | None = None
+    _session_id: str | None = field(default=None, init=False, repr=False)
 
     def _client(self) -> httpx.AsyncClient:
         return self.http_client or httpx.AsyncClient(timeout=15.0)
@@ -90,6 +103,42 @@ class X402Client:
     async def _maybe_close(self, client: httpx.AsyncClient) -> None:
         if self.http_client is None:
             await client.aclose()
+
+    def _headers(self, extra: dict[str, str] | None = None) -> dict[str, str]:
+        headers = {"Accept": ACCEPT_HEADER}
+        if self._session_id:
+            headers[SESSION_HEADER] = self._session_id
+        if extra:
+            headers.update(extra)
+        return headers
+
+    async def _ensure_session(self, client: httpx.AsyncClient) -> None:
+        """Perform the streamable-http `initialize` handshake once and cache
+        the `Mcp-Session-Id` every later request on this client must carry.
+        A fresh `X402Client` has none yet -- every real call (paid or free)
+        needs one, since both eventually reach FastMCP's streamable handler,
+        which 400s with "Missing session ID" without it."""
+        if self._session_id:
+            return
+        envelope = {
+            "jsonrpc": "2.0",
+            "id": next(_request_id_counter),
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": {"name": "ria-oracle", "version": "1.0.0"},
+            },
+        }
+        response = await client.post(self.mcp_url, json=envelope, headers=self._headers())
+        if response.status_code != 200:
+            raise X402PaymentError(
+                f"MCP session initialize failed: HTTP {response.status_code}: {response.text[:300]}"
+            )
+        session_id = response.headers.get(SESSION_HEADER) or response.headers.get(SESSION_HEADER.lower())
+        if not session_id:
+            raise X402PaymentError("MCP server did not return an Mcp-Session-Id on initialize")
+        self._session_id = session_id
 
     @staticmethod
     def _rpc_envelope(tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
@@ -149,8 +198,22 @@ class X402Client:
         return base64.b64encode(json.dumps(payload).encode()).decode()
 
     @staticmethod
-    def _parse_rpc_response(response: httpx.Response) -> dict[str, Any]:
-        body = response.json()
+    def _parse_response_body(response: httpx.Response) -> dict[str, Any]:
+        """Parse a JSON-RPC response that may come back as a plain
+        `application/json` body or, per this module's docstring, SSE-framed
+        (`content-type: text/event-stream`, `event: message\\ndata: {...}`)
+        -- FastMCP's default for streamable-http."""
+        content_type = response.headers.get("content-type", "")
+        if content_type.startswith("text/event-stream"):
+            for line in response.text.splitlines():
+                if line.startswith("data:"):
+                    return json.loads(line[len("data:") :].strip())
+            raise X402PaymentError(f"SSE response from MCP server had no 'data:' event: {response.text[:300]}")
+        return response.json()
+
+    @classmethod
+    def _parse_rpc_response(cls, response: httpx.Response) -> dict[str, Any]:
+        body = cls._parse_response_body(response)
         if isinstance(body, dict) and body.get("error"):
             raise X402PaymentError(f"MCP tool call returned an error: {body['error']}")
         return body.get("result", body) if isinstance(body, dict) else body
@@ -166,7 +229,11 @@ class X402Client:
         arguments = arguments or {}
         client = self._client()
         try:
-            first = await client.post(self.mcp_url, json=self._rpc_envelope(tool_name, arguments))
+            await self._ensure_session(client)
+
+            first = await client.post(
+                self.mcp_url, json=self._rpc_envelope(tool_name, arguments), headers=self._headers()
+            )
 
             if first.status_code == 200:
                 return ToolCallResult(result=self._parse_rpc_response(first), settlement=None, hbar_paid=0.0)
@@ -187,7 +254,7 @@ class X402Client:
             retry = await client.post(
                 self.mcp_url,
                 json=self._rpc_envelope(tool_name, arguments),
-                headers={PAYMENT_HEADER: payment_header},
+                headers=self._headers({PAYMENT_HEADER: payment_header}),
             )
             if retry.status_code != 200:
                 raise X402PaymentError(
