@@ -26,12 +26,12 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 <!-- STATUS:START -->
 | | |
 |---|---|
-| **Current phase** | Architecture finalized (v3) — implementation starting |
-| **Build checklist** | `░░░░░░░░░░░░░░░░░░░░` 0/15 (0%) — verified live where possible, not self-reported |
-| **Time to ETHGlobal deadline** | 3d 8h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`34aaea1`](https://github.com/arrnaya/AgentRIA/commit/34aaea175e9531183ba2c28f01482672039a8ffe) Fix live registration bug #5: find_deployed_proxy's unbounded eth_getLogs — Arrnaya |
-| **Total commits** | 68 |
-| **Last updated** | 2026-09-10 07:45 UTC |
+| **Current phase** | In progress — 1/15 build milestones verified |
+| **Build checklist** | `█░░░░░░░░░░░░░░░░░░░` 1/15 (7%) — verified live where possible, not self-reported |
+| **Time to ETHGlobal deadline** | 3d 7h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
+| **Latest commit** | [`85facdd`](https://github.com/arrnaya/AgentRIA/commit/85facdd8deba567450374d7c316083fc52951595) ENSv2 identity is live on Sepolia -- first checklist item genuinely done — Arrnaya |
+| **Total commits** | 70 |
+| **Last updated** | 2026-09-10 08:05 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
