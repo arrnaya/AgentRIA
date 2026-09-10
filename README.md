@@ -28,10 +28,10 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 |---|---|
 | **Current phase** | In progress — 1/15 build milestones verified |
 | **Build checklist** | `█░░░░░░░░░░░░░░░░░░░` 1/15 (7%) — verified live where possible, not self-reported |
-| **Time to ETHGlobal deadline** | 3d 7h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`6511924`](https://github.com/arrnaya/AgentRIA/commit/6511924a5101aaf7e2ff67d0fdced8cefb797a9c) Fix HEDERA_PRIVATE_KEY loading silently guessing the wrong key algorithm — Arrnaya |
-| **Total commits** | 76 |
-| **Last updated** | 2026-09-10 08:51 UTC |
+| **Time to ETHGlobal deadline** | 3d 6h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
+| **Latest commit** | [`9fb0c19`](https://github.com/arrnaya/AgentRIA/commit/9fb0c197b08e4b6714172b6ee57c99c03ac35aab) Fail loud, client-side, when ORACLE's wallet equals payTo — Arrnaya |
+| **Total commits** | 78 |
+| **Last updated** | 2026-09-10 09:05 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
