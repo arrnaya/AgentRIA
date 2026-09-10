@@ -309,13 +309,13 @@ intact while giving judges interactive, live proof of every decision and payment
 | `pipeline/ws_server.py` / `runner.py` — WebSocket feed + CLI entrypoint | 🟡 Built & unit-tested — not yet run live against the dashboard |
 | `mcp_server/` — x402-gated MCP server + 5 priced tools | ✅ **Live on Hedera testnet** — `get_gas_price` confirmed end-to-end against the real Blocky402 facilitator (see below); the other 4 priced tools run the same code path but aren't individually live-confirmed yet |
 | ORACLE — x402 payment client (`hedera/x402_client.py`, `agents/oracle.py`) | ✅ **Live on Hedera testnet** — one real paid `get_gas_price` call, settled, confirmed on the public mirror node (see below) |
-| AUDIT — HCS logging (`hedera/hcs_logger.py`, `agents/audit.py`) | 🟡 Built & unit-tested — needs an `HCS_TOPIC_ID` (one-time `HcsLogger.create_topic()` call) to log for real |
+| AUDIT — HCS logging (`hedera/hcs_logger.py`, `agents/audit.py`) | ✅ **Live on Hedera testnet** — one real message logged to topic `0.0.10467384`, confirmed on the public mirror node (see below) |
 | ENSv2 subname registration (`ens/`) | ✅ **Live on Sepolia** — all 4 subnames registered, isolation verified on-chain, independently re-confirmed with a fresh read-only `text()` call (see below) |
-| ERC-8004 agent identity | 🔜 Not started |
-| Live WebSocket feed → dashboard | 🔜 Backend emits real events now; `frontend-integrator` hasn't wired the dashboard to consume them yet |
+| ERC-8004 agent identity (`hedera/erc8004.py`) | 🟡 Built & unit-tested — Identity Registry contract + registration script ready, needs a live run (`scripts/register_erc8004_live.py`) to deploy and register for real |
+| Live WebSocket feed → dashboard | 🟡 Dashboard now wired (`src/hooks/useRiaSocket.ts`) and verified against a real WebSocket connection with synthetic pipeline events — needs `pipeline/runner.py` actually running (with a live `GRAPH_API_KEY`) for the dashboard to show real signals instead of the honest preview fallback |
 | Demo video | 🔜 Before submission |
 
-**181+ tests pass with zero live credentials or network access required** — every module above mocks its external dependency (the Graph Gateway, Blocky402, Hedera SDK submission, Sepolia RPC) rather than skipping the test. What's missing everywhere else is the same thing: real funded accounts and a live run to actually flip a [Build Checklist](#build-checklist) box, which only happens when `verify-checklist.mjs` (or a human, for anything that spends HBAR/ETH) proves it — see [Development Workflow](#development-workflow). ENSv2 and the x402 payment flow below are the first two components to clear that bar for real.
+**208+ tests pass with zero live credentials or network access required** — every module above mocks its external dependency (the Graph Gateway, Blocky402, Hedera SDK submission, Sepolia RPC) rather than skipping the test. What's missing everywhere else is the same thing: real funded accounts and a live run to actually flip a [Build Checklist](#build-checklist) box, which only happens when `verify-checklist.mjs` (or a human, for anything that spends HBAR/ETH) proves it — see [Development Workflow](#development-workflow). ENSv2, the x402 payment flow, and HCS audit logging below have cleared that bar for real.
 
 **Live on Hedera testnet right now** — a real, unmocked x402 payment, verifiable by anyone on the public mirror node:
 
@@ -327,6 +327,14 @@ intact while giving judges interactive, live proof of every decision and payment
 | Facilitator (fee payer) | `0.0.9185802` (Blocky402, `api.testnet.blocky402.com`) |
 | Amount | 0.0005 HBAR (50,000 tinybars) |
 | Settlement tx | [`0.0.9185802-1789031699-073655128`](https://hashscan.io/testnet/transaction/0.0.9185802-1789031699-073655128) — `SUCCESS`, confirmed on the [public mirror node](https://testnet.mirrornode.hedera.com/api/v1/transactions/0.0.9185802-1789031699-073655128) |
+
+AUDIT's HCS trail is live too — one real message, independently decoded and confirmed against the mirror node (not just the script's own claim):
+
+| Step | Value |
+|---|---|
+| Topic | [`0.0.10467384`](https://hashscan.io/testnet/topic/0.0.10467384) |
+| Message | `{"type": "PAYMENT", "tool_name": "get_gas_price", "hbar_amount": 0.0005, ...}` — sequence #1, payer `0.0.10452229` |
+| Verify yourself | [mirror node topic messages](https://testnet.mirrornode.hedera.com/api/v1/topics/0.0.10467384/messages) — base64-decode `message` to see the JSON payload |
 
 **Live on Sepolia right now** — resolve any of these yourself, no trust required:
 
@@ -610,7 +618,7 @@ the boxes below on every push — check one off in a commit and the status block
 - [ ] x402-gated MCP server running, all 5 tools responding
 - [x] Blocky402 facilitator registered, x402 middleware intercepting
 - [x] ORACLE agent completing the full x402 payment flow end-to-end
-- [ ] HCS topic created, AUDIT agent writing entries
+- [x] HCS topic created, AUDIT agent writing entries
 - [ ] ERC-8004 agent identities registered
 - [x] ENSv2 subnames registered with Permissioned Resolver
 - [ ] Dashboard — all 4 panels updating with live data
