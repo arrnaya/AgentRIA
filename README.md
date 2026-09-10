@@ -28,10 +28,10 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 |---|---|
 | **Current phase** | Architecture finalized (v3) — implementation starting |
 | **Build checklist** | `░░░░░░░░░░░░░░░░░░░░` 0/15 (0%) — verified live where possible, not self-reported |
-| **Time to ETHGlobal deadline** | 3d 10h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`f96ad35`](https://github.com/arrnaya/AgentRIA/commit/f96ad35a10b12d4683944e5432108eb0977e844a) Fix set_github_secrets.sh: gh secret set has no --body-file flag — Arrnaya |
-| **Total commits** | 53 |
-| **Last updated** | 2026-09-10 05:58 UTC |
+| **Time to ETHGlobal deadline** | 3d 9h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
+| **Latest commit** | [`97d6295`](https://github.com/arrnaya/AgentRIA/commit/97d6295f8e5cb63f77d58337ef836ef6c36b41a2) Add tests for resolver redeploy idempotency safety — ARUN KUMAR YADAV |
+| **Total commits** | 58 |
+| **Last updated** | 2026-09-10 06:36 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
