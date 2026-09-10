@@ -38,7 +38,8 @@ set_secret() {
     echo "  skip $name (not set in $ENV_FILE)"
     return
   fi
-  printf '%s' "$value" | gh secret set "$name" --repo "$REPO" --body-file -
+  # No -b/--body flag: gh reads the secret value from stdin by default.
+  printf '%s' "$value" | gh secret set "$name" --repo "$REPO"
   echo "  set  $name"
 }
 
@@ -54,12 +55,19 @@ set_secret ANTHROPIC_API_KEY
 set_secret ETHERSCAN_API_KEY
 set_secret COINGECKO_API_KEY
 set_secret BLOCKY402_FACILITATOR_URL
-set_secret HCS_TOPIC_ID
 set_secret SEPOLIA_RPC_URL
 set_secret ENS_RESOLVER_ADDRESS
+set_secret HEDERA_ACCOUNT_ID
+
+# NOT listed here on purpose: HCS_TOPIC_ID doesn't exist yet until you
+# create it -- it's not a credential you obtain ahead of time, it's the
+# *output* of a one-time on-chain call. Run HcsLogger.create_topic() once
+# (needs HEDERA_ACCOUNT_ID/HEDERA_PRIVATE_KEY in your local environment),
+# it prints back a topic id like "0.0.123456", then add THAT to
+# .env.local as HCS_TOPIC_ID and re-run this script if you want it as a
+# secret too.
 
 # Deliberately NOT set by default -- see the header comment above.
-# set_secret HEDERA_ACCOUNT_ID
 # set_secret HEDERA_PRIVATE_KEY
 # set_secret ENS_PRIVATE_KEY
 
