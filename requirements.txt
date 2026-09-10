@@ -27,5 +27,20 @@ pytest>=8.0
 pytest-asyncio>=0.24
 respx>=0.21
 
-# Added when built (see README > Build Timeline):
-# ens (web3.py or similar) — ens/register.py, ens/resolver.py
+# ENS identity layer (ens/register.py, ens/resolver.py)
+# NOT web3.py, deliberately: web3.py's own PyPI wheel ships a top-level
+# `ens` package (for `Web3().ens`) that collides with our required `ens/`
+# directory the instant repo root is on sys.path — which pytest.ini's
+# `pythonpath = .` guarantees for every test run. Confirmed by hand: with
+# both installed, `import web3` unconditionally does `from ens import
+# ENS, AsyncENS` and resolves to *our* ens/ package instead of its own,
+# and fails — order-independent, unavoidable while both share the name.
+# So we skip web3.py and build directly on its own lower-level, actively
+# maintained dependencies (no naming conflict, and no ENSv2-specific
+# package exists yet — it's still in beta): eth-account for tx signing,
+# eth-abi for ABI encoding/decoding, eth-utils for keccak/namehash and
+# address checksums, and the project's existing httpx for raw JSON-RPC
+# (see ens/rpc.py) instead of web3.py's Contract/Web3 abstractions.
+eth-account>=0.13
+eth-abi>=5.1,<6
+eth-utils>=5.0
