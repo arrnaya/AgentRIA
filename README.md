@@ -265,8 +265,11 @@ state updates (`SIGNAL`, `TRACE`, `PAYMENT`, `AUDIT`) to the dashboard in real t
 ### ENSv2 agent identity (Sepolia)
 
 Each core agent carries its own ENSv2 subname with isolated permissions via the Permissioned
-Resolver — one agent can't touch another's records. Metadata follows ENSIP-26 so identities are
-discoverable and composable by other protocols.
+Resolver — one agent can't touch another's records. Isolation is enforced by ENSv2's Enhanced
+Access Control: each subname's node is its own on-chain permission scope, and only that agent's
+own derived signing key is ever granted the role to write it — a write from any other key reverts
+on-chain (`EACUnauthorizedAccountRoles`), not just a convention this codebase happens to follow.
+Metadata follows ENSIP-26 so identities are discoverable and composable by other protocols.
 
 | ENS name | Agent | Text records (ENSIP-26) | Access control |
 |---|---|---|---|
@@ -421,7 +424,8 @@ Environment variables (`GRAPH_API_KEY`, `HEDERA_ACCOUNT_ID`, …) are documented
 | `MCP_SERVER_URL` | Wherever `mcp_server/server.py` is running (default `http://127.0.0.1:8000/mcp`) | n/a — your own server |
 | `ENS_PRIVATE_KEY` | Sepolia wallet with test ETH, owning `agentria.eth` | Free from a Sepolia faucet |
 | `SEPOLIA_RPC_URL` | Infura / Alchemy / a public Sepolia gateway | Free tier |
-| `ENS_RESOLVER_ADDRESS` *(optional)* | `agentria.eth`'s ENSv2 Permissioned Resolver proxy — check `sepolia.app.ens.domains/agentria.eth` | Falls back to Sepolia's standard `PublicResolver` if unset |
+| `RIA_SUBREGISTRY_ADDRESS` *(optional)* | agentria.eth's own ENSv2 subregistry (holds recon/oracle/exec/audit as child labels) — printed by `scripts/register_agents_live.py` after its first run | Deploys a fresh one via ENSv2's VerifiableFactory if unset |
+| `RIA_RESOLVER_ADDRESS` *(optional)* | The shared ENSv2 Permissioned Resolver proxy RIA's four subnames resolve through — printed by `scripts/register_agents_live.py` after its first run | Deploys a fresh one via ENSv2's VerifiableFactory if unset |
 
 ## Running Locally
 
