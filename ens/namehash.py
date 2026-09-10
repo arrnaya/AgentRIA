@@ -29,3 +29,12 @@ def namehash(name: str) -> bytes:
 def labelhash(label: str) -> bytes:
     """Hash of a single label (the part between dots), e.g. "oracle"."""
     return keccak(text=label)
+
+
+def label_id(label: str) -> int:
+    """LibLabel.id(label): uint256(keccak256(bytes(label))) -- the same
+    bytes as labelhash(), reinterpreted as the uint256 `anyId`
+    PermissionedRegistry's getExpiry/setSubregistry/roles etc. take.
+    Verified against contracts/src/utils/LibLabel.sol in
+    ensdomains/contracts-v2."""
+    return int.from_bytes(labelhash(label), "big")

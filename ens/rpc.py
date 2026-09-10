@@ -39,6 +39,7 @@ class EthRpc(Protocol):
     def get_transaction_count(self, address: str) -> int: ...
     def gas_price(self) -> int: ...
     def send_raw_transaction(self, raw: bytes) -> str: ...
+    def get_code(self, address: str) -> bytes: ...
 
 
 class SepoliaRpcClient:
@@ -69,6 +70,10 @@ class SepoliaRpcClient:
 
     def send_raw_transaction(self, raw: bytes) -> str:
         return self._request("eth_sendRawTransaction", [_hex(raw)])
+
+    def get_code(self, address: str) -> bytes:
+        result = self._request("eth_getCode", [address, "latest"])
+        return bytes.fromhex(result[2:])
 
     def is_connected(self) -> bool:
         try:
