@@ -3,7 +3,7 @@ from eth_account import Account
 
 from ens.constants import ENS_PERMISSIONED_RESOLVER_IMPL_ADDRESS, ENS_VERIFIABLE_FACTORY_ADDRESS
 from ens.namehash import namehash
-from ens.resolver import PermissionedResolver, ResolverPermissionError, deploy_resolver_proxy
+from ens.resolver import ResolverPermissionError, deploy_resolver_proxy
 from tests.fake_chain import ChainRevert, FakeChain
 
 ADMIN_KEY = "0x" + "aa" * 32

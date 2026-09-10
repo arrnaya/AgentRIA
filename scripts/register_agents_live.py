@@ -105,7 +105,7 @@ def main() -> int:
     if subregistry_override:
         print(f"Subregistry:          {subregistry_override}  (reusing, from {SUBREGISTRY_ENV})")
     else:
-        print(f"Subregistry:          looked up live; deployed fresh if none exists yet")
+        print("Subregistry:          looked up live; deployed fresh if none exists yet")
     if resolver_override:
         print(f"Resolver:             {resolver_override}  (reusing, from {RESOLVER_ENV})")
     else:

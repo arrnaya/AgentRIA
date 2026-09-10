@@ -2,8 +2,7 @@ import pytest
 from eth_account import Account
 
 from ens.accounts import derive_agent_account
-from ens.constants import ENS_ETH_REGISTRY_ADDRESS, PARENT_NAME, SUBNAME_TABLE
-from ens.namehash import namehash
+from ens.constants import ENS_ETH_REGISTRY_ADDRESS, SUBNAME_TABLE
 from ens.register import (
     FUNDING_WEI,
     ensure_resolver,
