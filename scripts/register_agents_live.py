@@ -10,6 +10,11 @@ confident in the resolver logic.
 What this run actually does (ENSv2, not ENSv1 -- see ens/registry.py and
 ens/resolver.py's module docstrings for the full verification):
 
+  0. Checks the admin wallet for any unconfirmed transaction left over
+     from a previous run (confirmed vs. pending nonce) and clears it
+     (same nonce, a bumped-price no-op) before sending anything else --
+     EVM nonces are strictly sequential, so a stuck one would otherwise
+     block every transaction this run tries to send behind it.
   1. Looks up agentria.eth's subregistry (getSubregistry("agentria") on
      ENS_ETH_REGISTRY_ADDRESS). If none exists yet -- confirmed true as of
      writing via a live read-only call -- deploys one (a UserRegistry
@@ -61,7 +66,7 @@ from ens.accounts import ENS_PRIVATE_KEY_ENV, has_admin_key, load_admin_account
 from ens.constants import ENS_ETH_REGISTRY_ADDRESS, PARENT_NAME, SUBNAME_TABLE
 from ens.register import ensure_resolver, ensure_subregistry, register_all, verify_isolation
 from ens.registry import PermissionedRegistryClient
-from ens.rpc import SepoliaRpcClient
+from ens.rpc import SepoliaRpcClient, build_and_send
 
 SEPOLIA_RPC_ENV = "SEPOLIA_RPC_URL"
 SUBREGISTRY_ENV = "RIA_SUBREGISTRY_ADDRESS"
@@ -131,23 +136,30 @@ def main() -> int:
     # otherwise block every transaction this run tries to send behind it
     # (EVM nonces are strictly sequential) -- confirmed against a real
     # failure: an earlier run's transaction was broadcast, logged as
-    # "deployed", but never actually landed on-chain (an RPC provider
-    # rejected the *next* transaction with an in-flight-limit policy error
-    # before this script waited for confirmations; ens/rpc.py's
-    # build_and_send now does). Check before spending any more gas.
+    # "deployed", but sat unconfirmed (sent underpriced relative to where
+    # the network's gas price had since moved) well past a normal
+    # confirmation wait. ens/rpc.py's build_and_send() now waits for
+    # confirmation and rebroadcasts at a bumped price *within one call*,
+    # but that only covers a transaction this same process sent -- a prior
+    # process's still-pending transaction needs clearing explicitly here,
+    # the same way (same nonce, generously bumped price, wait for it),
+    # before this run sends anything of its own.
     confirmed_nonce = rpc.get_transaction_count(admin.address, "latest")
     pending_nonce = rpc.get_transaction_count(admin.address, "pending")
     if pending_nonce != confirmed_nonce:
+        stuck = pending_nonce - confirmed_nonce
         print(
-            f"\n{admin.address} has {pending_nonce - confirmed_nonce} unconfirmed "
-            f"transaction(s) already in flight (confirmed nonce {confirmed_nonce}, "
-            f"pending nonce {pending_nonce}). Sending more right now would queue "
-            "behind them. Wait for the pending one(s) to confirm (check "
-            f"https://sepolia.etherscan.io/address/{admin.address}) or clear them "
-            "(e.g. a 0-value self-transfer at the same nonce with a higher gas "
-            "price) before re-running this script."
+            f"\n{admin.address} has {stuck} unconfirmed transaction(s) already "
+            f"in flight (confirmed nonce {confirmed_nonce}, pending nonce "
+            f"{pending_nonce}). Clearing them with a bumped-price no-op at each "
+            "nonce before sending anything else (check "
+            f"https://sepolia.etherscan.io/address/{admin.address} to see them)."
         )
-        return 1
+        for stuck_nonce in range(confirmed_nonce, pending_nonce):
+            print(f"  clearing nonce {stuck_nonce} ...")
+            build_and_send(rpc, admin.address, b"", admin, nonce=stuck_nonce, gas_price_multiplier=3.0)
+            print(f"  nonce {stuck_nonce} cleared")
+        print("All stuck transactions cleared.\n")
 
     root_registry = PermissionedRegistryClient(rpc=rpc, address=ENS_ETH_REGISTRY_ADDRESS)
 

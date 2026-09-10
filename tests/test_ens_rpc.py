@@ -123,6 +123,27 @@ def test_build_and_send_does_not_retry_other_rpc_errors(monkeypatch):
     assert rpc.send_calls == 1
 
 
+def test_build_and_send_rebroadcasts_at_the_same_nonce_on_timeout(monkeypatch):
+    """Regression test for a real stuck transaction: sent underpriced
+    relative to where the network's gas price had since moved, it sat
+    unconfirmed well past the receipt timeout. build_and_send() must not
+    just give up -- it should resend at the same nonce with a bumped price
+    (a standard replace-by-fee) rather than leaving the operator to
+    manually unstick it."""
+    monkeypatch.setattr("ens.rpc.time.sleep", lambda *_: None)
+    times = iter([0.0, 200.0, 300.0])  # attempt 1: deadline calc, timeout check; attempt 2: deadline calc
+    monkeypatch.setattr("ens.rpc.time.monotonic", lambda: next(times))
+    rpc = ScriptedRpc(
+        send_raises=[None, None],
+        receipts=[None, {"status": "0x1"}],  # attempt 1 never confirms; attempt 2 does immediately
+    )
+
+    tx_hash = build_and_send(rpc, "0x" + "22" * 20, b"", _signer())
+
+    assert tx_hash == "0x" + "11" * 32
+    assert rpc.send_calls == 2  # the original broadcast, then one rebroadcast
+
+
 def test_build_and_send_gives_up_after_max_in_flight_limit_retries(monkeypatch):
     monkeypatch.setattr("ens.rpc.time.sleep", lambda *_: None)
     persistent_error = RpcError("eth_sendRawTransaction failed: in-flight transaction limit reached for delegated accounts")

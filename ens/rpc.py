@@ -32,6 +32,22 @@ DEFAULT_GAS = 150_000
 RECEIPT_TIMEOUT_S = 180.0
 RECEIPT_POLL_INTERVAL_S = 4.0
 
+# eth_gasPrice's own suggestion has been observed going stale fast enough
+# on Sepolia to leave a transaction genuinely stuck (confirmed in practice:
+# a transaction sent at the node's then-current suggested price sat
+# unconfirmed for 180s+ while the network's price had already moved up
+# ~7%). A modest buffer costs nothing on a testnet and meaningfully lowers
+# the odds of landing underpriced.
+GAS_PRICE_BUFFER = 1.25
+
+# If a transaction still hasn't confirmed after RECEIPT_TIMEOUT_S, resend
+# it at the same nonce with a bumped price rather than just giving up --
+# most nodes require at least ~10% over the original to accept a
+# replacement; this multiplies the *original* price each retry, not the
+# network's (possibly still-stale) current suggestion.
+TIMEOUT_REBROADCAST_RETRIES = 2
+TIMEOUT_REBROADCAST_BUMP = 1.5
+
 # Some providers (confirmed against Infura in practice, 2026-09) cap how
 # many unconfirmed transactions they'll accept from one sender at once and
 # reject anything past it with this message rather than a normal nonce/gas
@@ -152,7 +168,16 @@ def wait_for_receipt(
         time.sleep(poll_interval_s)
 
 
-def build_and_send(rpc: EthRpc, to: str, data: bytes, signer: LocalAccount, value: int = 0) -> str:
+def build_and_send(
+    rpc: EthRpc,
+    to: str,
+    data: bytes,
+    signer: LocalAccount,
+    value: int = 0,
+    *,
+    nonce: int | None = None,
+    gas_price_multiplier: float = 1.0,
+) -> str:
     """Build a legacy transaction calling `to` with `data`, sign it with
     `signer`, broadcast it, and block until it's actually mined. Shared by
     resolver.py, register.py, registry.py and factory.py so every on-chain
@@ -172,33 +197,60 @@ def build_and_send(rpc: EthRpc, to: str, data: bytes, signer: LocalAccount, valu
     `value` (wei) is 0 for every contract call here except the one funding
     transfer register.py sends each derived agent account before that
     agent signs its own transaction — see register.py's `FUNDING_WEI`.
-    """
-    tx = {
-        "to": to,
-        "data": _hex(data),
-        "from": signer.address,
-        "nonce": rpc.get_transaction_count(signer.address),
-        "chainId": SEPOLIA_CHAIN_ID,
-        "gas": DEFAULT_GAS,
-        "gasPrice": rpc.gas_price(),
-        "value": value,
-    }
-    signed = signer.sign_transaction(tx)
-    raw = getattr(signed, "raw_transaction", None) or getattr(signed, "rawTransaction", None)
 
-    tx_hash = None
+    `nonce`, if given, is used as-is instead of looked up live -- the one
+    caller that needs this is scripts/register_agents_live.py's stuck-nonce
+    pre-flight check, replacing a specific already-pending transaction
+    rather than sending the next one in sequence. `gas_price_multiplier`
+    stacks on top of `GAS_PRICE_BUFFER` for the same case: a stuck
+    transaction from a *previous process* needs a price confidently above
+    whatever it was sent at, which this process never saw.
+    """
+    if nonce is None:
+        nonce = rpc.get_transaction_count(signer.address)
+    gas_price = round(rpc.gas_price() * GAS_PRICE_BUFFER * gas_price_multiplier)
+
+    for rebroadcast in range(TIMEOUT_REBROADCAST_RETRIES + 1):
+        tx = {
+            "to": to,
+            "data": _hex(data),
+            "from": signer.address,
+            "nonce": nonce,
+            "chainId": SEPOLIA_CHAIN_ID,
+            "gas": DEFAULT_GAS,
+            "gasPrice": gas_price,
+            "value": value,
+        }
+        signed = signer.sign_transaction(tx)
+        raw = getattr(signed, "raw_transaction", None) or getattr(signed, "rawTransaction", None)
+
+        tx_hash = _send_with_in_flight_retry(rpc, raw)
+
+        try:
+            wait_for_receipt(rpc, tx_hash)
+            return tx_hash
+        except TimeoutError:
+            if rebroadcast == TIMEOUT_REBROADCAST_RETRIES:
+                raise
+            gas_price = round(gas_price * TIMEOUT_REBROADCAST_BUMP)
+            # Same nonce, higher price: a standard replace-by-fee resend,
+            # not a new/duplicate action -- the original stays pending
+            # until one of the two lands, so this never double-executes.
+
+    raise AssertionError("unreachable")  # pragma: no cover -- loop always returns or raises
+
+
+def _send_with_in_flight_retry(rpc: EthRpc, raw: bytes) -> str:
+    """send_raw_transaction, retrying a few times with backoff if the
+    provider rejects it with an in-flight-transaction-limit policy error
+    (see module docstring) rather than a normal nonce/gas problem."""
     last_exc: Exception | None = None
     for attempt in range(_IN_FLIGHT_LIMIT_RETRIES):
         try:
-            tx_hash = rpc.send_raw_transaction(raw)
-            break
+            return rpc.send_raw_transaction(raw)
         except RpcError as exc:
             if not _is_in_flight_limit_error(exc) or attempt == _IN_FLIGHT_LIMIT_RETRIES - 1:
                 raise
             last_exc = exc
             time.sleep(_IN_FLIGHT_LIMIT_BACKOFF_S)
-    if tx_hash is None:  # pragma: no cover -- loop always breaks or raises
-        raise last_exc or RpcError("send_raw_transaction never returned a hash")
-
-    wait_for_receipt(rpc, tx_hash)
-    return tx_hash
+    raise last_exc or RpcError("send_raw_transaction never returned a hash")  # pragma: no cover
