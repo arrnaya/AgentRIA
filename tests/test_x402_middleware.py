@@ -30,6 +30,23 @@ from mcp_server.x402_middleware import (
 FACILITATOR_URL = "https://facilitator.test"
 PAY_TO = "0.0.9999"
 FEE_PAYER = "0.0.5555"
+# A real-shaped /supported response advertises a *different* fee payer per
+# CAIP-2 network family, "eip155:*" (EVM) sorting before "hedera:*" -- see
+# test_get_fee_payer_selects_hedera_network_not_first_signer below for the
+# regression this catches.
+EVM_FEE_PAYER = "0xDCF7D72C2eE049DE4269ac6AAf925F33efdA18de"
+SUPPORTED_RESPONSE = {
+    "kinds": [
+        {"x402Version": 2, "scheme": "exact", "network": "eip155:80002"},
+        {
+            "x402Version": 2,
+            "scheme": "exact",
+            "network": "hedera:testnet",
+            "extra": {"feePayer": FEE_PAYER},
+        },
+    ],
+    "signers": {"eip155:*": [EVM_FEE_PAYER], "hedera:*": [FEE_PAYER]},
+}
 
 
 async def _rpc_endpoint(request: Request) -> JSONResponse:
@@ -95,7 +112,7 @@ def test_unknown_tool_passes_through_ungated():
 @respx.mock
 def test_priced_tool_without_payment_returns_402():
     respx.get(f"{FACILITATOR_URL}/supported").mock(
-        return_value=httpx.Response(200, json={"signers": {"hedera": [FEE_PAYER]}})
+        return_value=httpx.Response(200, json=SUPPORTED_RESPONSE)
     )
     client = _build_client()
     resp = client.post("/mcp", content=_tools_call_body("get_gas_price"))
@@ -115,7 +132,7 @@ def test_priced_tool_without_payment_returns_402():
 @respx.mock
 def test_priced_tool_with_valid_payment_settles_and_forwards():
     respx.get(f"{FACILITATOR_URL}/supported").mock(
-        return_value=httpx.Response(200, json={"signers": {"hedera": [FEE_PAYER]}})
+        return_value=httpx.Response(200, json=SUPPORTED_RESPONSE)
     )
     verify_route = respx.post(f"{FACILITATOR_URL}/verify").mock(
         return_value=httpx.Response(200, json={"isValid": True, "payer": "0.0.1111"})
@@ -158,7 +175,7 @@ def test_priced_tool_with_valid_payment_settles_and_forwards():
 @respx.mock
 def test_failed_verification_returns_402_with_reason():
     respx.get(f"{FACILITATOR_URL}/supported").mock(
-        return_value=httpx.Response(200, json={"signers": {"hedera": [FEE_PAYER]}})
+        return_value=httpx.Response(200, json=SUPPORTED_RESPONSE)
     )
     respx.post(f"{FACILITATOR_URL}/verify").mock(
         return_value=httpx.Response(200, json={"isValid": False, "invalidReason": "bad_signature"})
@@ -178,7 +195,7 @@ def test_failed_verification_returns_402_with_reason():
 @respx.mock
 def test_failed_settlement_returns_402_with_reason():
     respx.get(f"{FACILITATOR_URL}/supported").mock(
-        return_value=httpx.Response(200, json={"signers": {"hedera": [FEE_PAYER]}})
+        return_value=httpx.Response(200, json=SUPPORTED_RESPONSE)
     )
     respx.post(f"{FACILITATOR_URL}/verify").mock(return_value=httpx.Response(200, json={"isValid": True}))
     respx.post(f"{FACILITATOR_URL}/settle").mock(
@@ -199,7 +216,7 @@ def test_failed_settlement_returns_402_with_reason():
 def test_malformed_payment_header_returns_402():
     with respx.mock:
         respx.get(f"{FACILITATOR_URL}/supported").mock(
-            return_value=httpx.Response(200, json={"signers": {"hedera": [FEE_PAYER]}})
+            return_value=httpx.Response(200, json=SUPPORTED_RESPONSE)
         )
         client = _build_client()
         resp = client.post(
@@ -216,6 +233,42 @@ def test_facilitator_unreachable_returns_503():
     client = _build_client()
     resp = client.post("/mcp", content=_tools_call_body("get_gas_price"))
     assert resp.status_code == 503
+
+
+@respx.mock
+def test_get_fee_payer_selects_hedera_network_not_first_signer():
+    """Regression test for a real live smoke-test failure: the previous
+    implementation took the first non-empty `signers` value with no regard
+    for which CAIP-2 network family it belonged to. Blocky402's real
+    /supported response lists `eip155:*` (an 0x... EVM address) before
+    `hedera:*`, so the middleware quoted an EVM address as the Hedera fee
+    payer in its 402 challenge -- which the facilitator's own /verify then
+    rejected with "invalid_exact_hedera_payload_missing_fee_payer" once the
+    client echoed it back, since it isn't a valid Hedera entity id."""
+    respx.get(f"{FACILITATOR_URL}/supported").mock(return_value=httpx.Response(200, json=SUPPORTED_RESPONSE))
+    client = _build_client()
+    resp = client.post("/mcp", content=_tools_call_body("get_gas_price"))
+
+    assert resp.status_code == 402
+    fee_payer = resp.json()["accepts"][0]["extra"]["feePayer"]
+    assert fee_payer == FEE_PAYER
+    assert not fee_payer.startswith("0x")
+
+
+@respx.mock
+def test_get_fee_payer_falls_back_to_signers_when_kinds_missing():
+    """A facilitator that only advertises `signers` (no `kinds` array) must
+    still be matched by network family, not by insertion order."""
+    respx.get(f"{FACILITATOR_URL}/supported").mock(
+        return_value=httpx.Response(
+            200, json={"signers": {"eip155:*": [EVM_FEE_PAYER], "hedera:*": [FEE_PAYER]}}
+        )
+    )
+    client = _build_client()
+    resp = client.post("/mcp", content=_tools_call_body("get_gas_price"))
+
+    assert resp.status_code == 402
+    assert resp.json()["accepts"][0]["extra"]["feePayer"] == FEE_PAYER
 
 
 def test_from_env_requires_config(monkeypatch):

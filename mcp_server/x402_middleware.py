@@ -137,21 +137,42 @@ class X402Middleware(BaseHTTPMiddleware):
             raise FacilitatorError(f"GET /supported returned HTTP {response.status_code}")
         body = response.json()
 
-        # scaffold-hbar's reference facilitator advertises its fee payer
-        # under `signers`, keyed by CAIP-2 network family; some self-hosted
-        # facilitators expose the simpler `{"feePayer": ...}` shape from
-        # their /health endpoint instead — accept either.
+        # Real-world /supported responses (confirmed live against
+        # api.testnet.blocky402.com) advertise a *different* fee payer per
+        # CAIP-2 network family -- e.g. `signers` has separate `eip155:*`
+        # (an 0x... EVM address), `solana:*`, and `hedera:*` entries, and
+        # `kinds` has one object per (scheme, network) with its own
+        # `extra.feePayer`. Blindly taking the first `signers` value grabs
+        # whichever family happens to serialize first (an EVM address, in
+        # practice), which the facilitator's own /verify then rejects with
+        # "invalid_exact_hedera_payload_missing_fee_payer" since it isn't a
+        # Hedera entity id -- so this must select by `self.network`
+        # specifically, not just take anything non-empty.
+        for kind in body.get("kinds", []):
+            if kind.get("network") == self.network:
+                fee_payer = (kind.get("extra") or {}).get("feePayer")
+                if fee_payer:
+                    self._fee_payer = fee_payer
+                    return self._fee_payer
+
         signers = body.get("signers", {})
-        for addrs in signers.values():
+        network_family = self.network.split(":", 1)[0] + ":*"  # "hedera:testnet" -> "hedera:*"
+        for key in (self.network, network_family):
+            addrs = signers.get(key)
             if addrs:
                 self._fee_payer = addrs[0]
                 return self._fee_payer
+
+        # Fallback for a simpler self-hosted facilitator that just exposes
+        # `{"feePayer": ...}` with no per-network breakdown at all.
         fee_payer = body.get("feePayer")
         if fee_payer:
             self._fee_payer = fee_payer
             return self._fee_payer
 
-        raise FacilitatorError(f"Could not determine facilitator fee payer from /supported: {body}")
+        raise FacilitatorError(
+            f"Could not determine a {self.network} fee payer from /supported: {body}"
+        )
 
     def _requirements(self, tool_name: str, fee_payer: str) -> dict[str, Any]:
         """Build `PaymentRequirements` for `tool_name` per scheme_exact_hedera.md."""
