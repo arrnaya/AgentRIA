@@ -199,13 +199,34 @@ def _patch_deploy_transactions(monkeypatch, *, file_id=None, contract_id=None):
     return fake_file_tx, fake_append_tx, fake_contract_tx
 
 
+def test_deploy_registry_uploads_hex_string_not_decoded_bytes(monkeypatch):
+    """Regression test for a real live-run failure: deploy_registry() used
+    to decode the artifact's hex bytecode string to raw binary
+    (bytes.fromhex) before uploading it to the File Service. Hedera's own
+    docs (docs.hedera.com/native/smart-contracts/create) are explicit that
+    the file must hold the HEX-ENCODED bytecode text, which the network
+    decodes itself -- uploading already-decoded binary made a real
+    ContractCreateTransaction fail with ERROR_DECODING_BYTESTRING. The
+    file's contents must be the hex string's own characters, unchanged."""
+    fake_file_tx, _, _ = _patch_deploy_transactions(monkeypatch)
+    client = MagicMock()
+    private_key = _FakePrivateKey()
+    artifact = load_artifact()
+
+    deploy_registry(client, private_key)
+
+    fake_file_tx.set_contents.assert_called_once()
+    (uploaded,), _ = fake_file_tx.set_contents.call_args
+    assert uploaded == artifact["bytecode"][: erc8004_module.FIRST_FILE_CHUNK_BYTES]
+    assert isinstance(uploaded, str)  # the hex string itself, not bytes.fromhex() output
+
+
 def test_deploy_registry_skips_append_when_bytecode_fits_in_one_chunk(monkeypatch):
     fake_file_tx, fake_append_tx, fake_contract_tx = _patch_deploy_transactions(monkeypatch)
+    monkeypatch.setattr(erc8004_module, "load_artifact", lambda: {"bytecode": "ab" * 100})  # 200 hex chars
     client = MagicMock()
     private_key = _FakePrivateKey()
 
-    # The real checked-in artifact is ~3.5KB, under FIRST_FILE_CHUNK_BYTES
-    # (4000), so no FileAppendTransaction should be constructed at all.
     result = deploy_registry(client, private_key)
 
     fake_file_tx.execute.assert_called_once_with(client, validate_status=True)
@@ -218,8 +239,9 @@ def test_deploy_registry_skips_append_when_bytecode_fits_in_one_chunk(monkeypatc
 
 def test_deploy_registry_appends_remainder_when_bytecode_exceeds_first_chunk(monkeypatch):
     fake_file_tx, fake_append_tx, fake_contract_tx = _patch_deploy_transactions(monkeypatch)
-    # Force a larger-than-one-chunk bytecode via a fake artifact.
-    big_bytecode_hex = ("ab" * 5000)
+    # Force a larger-than-one-chunk bytecode via a fake artifact -- 6000 hex
+    # characters, comfortably over FIRST_FILE_CHUNK_BYTES (4000).
+    big_bytecode_hex = "ab" * 3000
     monkeypatch.setattr(erc8004_module, "load_artifact", lambda: {"bytecode": big_bytecode_hex})
     client = MagicMock()
     private_key = _FakePrivateKey()
@@ -228,8 +250,19 @@ def test_deploy_registry_appends_remainder_when_bytecode_exceeds_first_chunk(mon
 
     fake_append_tx.set_contents.assert_called_once()
     (remainder,), _ = fake_append_tx.set_contents.call_args
-    assert len(remainder) == 5000 - erc8004_module.FIRST_FILE_CHUNK_BYTES
+    assert remainder == big_bytecode_hex[erc8004_module.FIRST_FILE_CHUNK_BYTES :]
+    assert len(remainder) == len(big_bytecode_hex) - erc8004_module.FIRST_FILE_CHUNK_BYTES
     fake_append_tx.execute_all.assert_called_once_with(client)
+
+
+def test_deploy_registry_real_artifact_needs_append(monkeypatch):
+    """The real checked-in contract's hex bytecode string is ~7KB of
+    characters -- comfortably over FIRST_FILE_CHUNK_BYTES (4000) -- so a
+    real deploy genuinely exercises the FileAppendTransaction path. This
+    would have silently gone untested if a test only ever used a
+    small/synthetic artifact standing in for it."""
+    artifact = load_artifact()
+    assert len(artifact["bytecode"]) > erc8004_module.FIRST_FILE_CHUNK_BYTES
 
 
 def test_deploy_registry_raises_when_file_create_receipt_has_no_file_id(monkeypatch):

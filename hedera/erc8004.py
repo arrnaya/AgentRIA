@@ -109,13 +109,16 @@ logger = logging.getLogger("ria.erc8004")
 
 # Hedera's File Service enforces roughly a 6 KiB signed-transaction size
 # limit (docs.hedera.com/hedera/sdks-and-apis/sdks/file-service/create-a-file);
-# 4000 bytes of raw contract bytecode leaves comfortable headroom for the
-# rest of the transaction (body, signatures, node/tx ids) within that cap
-# for the first FileCreateTransaction chunk. Anything beyond that goes
+# 4000 bytes of the file's actual contents -- the hex-encoded bytecode
+# TEXT uploaded (see deploy_registry()'s docstring for why it's the hex
+# string, not decoded binary; this doubles the byte count vs. the raw
+# ~3.5 KB compiled contract, to ~7 KB of hex characters, which is why the
+# FileAppendTransaction path below is load-bearing for this contract, not
+# just a hypothetical for a bigger one) -- leaves comfortable headroom for
+# the rest of the transaction (body, signatures, node/tx ids) within that
+# cap for the first FileCreateTransaction chunk. Anything beyond that goes
 # through FileAppendTransaction, which chunks automatically (default
-# chunk_size=4096, see hiero_sdk_python's ChunkedTransaction) -- so this
-# module works whether the compiled contract is a few KB (it is today,
-# ~3.5 KB) or grows well beyond one chunk later.
+# chunk_size=4096, see hiero_sdk_python's ChunkedTransaction).
 FIRST_FILE_CHUNK_BYTES = 4000
 
 DEFAULT_CREATE_GAS = 2_000_000
@@ -250,9 +253,21 @@ def deploy_registry(
     to reuse it on subsequent runs instead of deploying a second registry.
     """
     artifact = load_artifact()
-    bytecode = bytes.fromhex(artifact["bytecode"])
+    # Hedera's own docs (docs.hedera.com/native/smart-contracts/create:
+    # "After you have the hex-encoded bytecode... store that on a file")
+    # are explicit that the File Service file must hold the HEX-ENCODED
+    # bytecode text, which the network decodes itself when the contract is
+    # created -- not pre-decoded raw binary. Confirmed the hard way on a
+    # real live run: uploading `bytes.fromhex(artifact["bytecode"])` (raw
+    # binary) made ContractCreateTransaction fail with
+    # ERROR_DECODING_BYTESTRING ("Decoding the smart contract binary to a
+    # byte array failed. Check that the input is a valid hex string.") --
+    # the network tried to hex-decode bytes that were already binary.
+    # `set_contents()` UTF-8-encodes a `str`, so the hex string's
+    # characters are what get chunked below, not decoded bytes.
+    bytecode_hex = artifact["bytecode"]
 
-    first_chunk, remainder = bytecode[:FIRST_FILE_CHUNK_BYTES], bytecode[FIRST_FILE_CHUNK_BYTES:]
+    first_chunk, remainder = bytecode_hex[:FIRST_FILE_CHUNK_BYTES], bytecode_hex[FIRST_FILE_CHUNK_BYTES:]
 
     try:
         file_tx = (
