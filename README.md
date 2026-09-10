@@ -29,9 +29,9 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 | **Current phase** | Architecture finalized (v3) — implementation starting |
 | **Build checklist** | `░░░░░░░░░░░░░░░░░░░░` 0/15 (0%) — verified live where possible, not self-reported |
 | **Time to ETHGlobal deadline** | 3d 12h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`b90372e`](https://github.com/arrnaya/AgentRIA/commit/b90372e6bf8243f1eda5ad61b4085a4b996d0932) Professionalize the dev workflow: agent team, verified status, real deadline — Arrnaya |
-| **Total commits** | 14 |
-| **Last updated** | 2026-09-10 03:19 UTC |
+| **Latest commit** | [`2a89082`](https://github.com/arrnaya/AgentRIA/commit/2a890821610b04eb13de37e69b26066610a3e7cd) Correct x402/mcp package facts before dispatching build agents — Arrnaya |
+| **Total commits** | 16 |
+| **Last updated** | 2026-09-10 03:36 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
