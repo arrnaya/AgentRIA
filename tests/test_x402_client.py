@@ -115,6 +115,25 @@ async def test_paid_tool_builds_signs_and_retries_with_payment(wallet):
 
 
 @respx.mock
+async def test_paying_own_account_raises_clear_error(wallet):
+    """Regression test for a real live-run failure: when payTo (the
+    resource server's HEDERA_ACCOUNT_ID) equals this wallet's own account,
+    a native Hedera transfer to "yourself" nets to zero -- the facilitator
+    rejected this with the fairly opaque
+    "invalid_exact_hedera_payload_amount_mismatch". This must be caught
+    client-side with an explanation, before ever building the (necessarily
+    broken) transaction."""
+    requirements = _requirements()
+    requirements["payTo"] = BUYER_ACCOUNT  # same account as `wallet` fixture
+    respx.post(MCP_URL).mock(
+        return_value=httpx.Response(402, json={"x402Version": 2, "accepts": [requirements]})
+    )
+    client = X402Client(wallet=wallet, mcp_url=MCP_URL)
+    with pytest.raises(X402PaymentError, match="own account"):
+        await client.call_tool("get_gas_price")
+
+
+@respx.mock
 async def test_402_with_no_accepts_raises(wallet):
     respx.post(MCP_URL).mock(return_value=httpx.Response(402, json={"x402Version": 2, "accepts": []}))
     client = X402Client(wallet=wallet, mcp_url=MCP_URL)

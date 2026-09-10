@@ -107,6 +107,28 @@ class X402Client:
         pay_to = AccountId.from_string(requirements["payTo"])
         fee_payer = AccountId.from_string(requirements["extra"]["feePayer"])
 
+        if pay_to == self.wallet.account_id:
+            # A native Hedera HBAR transfer to yourself always nets to zero
+            # -- the network (and hiero_sdk_python locally) collapses two
+            # entries for the same account in one TransferList into a
+            # single net amount, so this wallet's -amount and pay_to's
+            # +amount cancel out before the transaction is ever sent.
+            # Confirmed against a real live run: the facilitator's /verify
+            # rejected exactly this with
+            # "invalid_exact_hedera_payload_amount_mismatch" because it saw
+            # 0 tinybars net to payTo, not `amount`. ORACLE's wallet
+            # (HEDERA_ACCOUNT_ID) and the resource server's payTo
+            # (also HEDERA_ACCOUNT_ID, from X402Middleware.from_env) must be
+            # two different funded testnet accounts.
+            raise X402PaymentError(
+                f"Cannot pay {pay_to}: it's this wallet's own account. A native "
+                "Hedera transfer to yourself always nets to zero, so the "
+                "facilitator will reject it as an amount mismatch. Run the MCP "
+                "server (Terminal 1) with a *different* HEDERA_ACCOUNT_ID than "
+                "ORACLE's own wallet (Terminal 2) — it doesn't need a private "
+                "key, just a second funded testnet account to receive payments."
+            )
+
         tx = (
             TransferTransaction()
             .add_hbar_transfer(self.wallet.account_id, -amount)
