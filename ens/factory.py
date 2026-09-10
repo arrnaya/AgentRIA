@@ -86,6 +86,18 @@ DEPLOY_PROXY_FN = Function("deployProxy", ("address", "uint256", "bytes"), ("add
 # emitted log on Sepolia, not computed from a guessed event signature.
 PROXY_DEPLOYED_TOPIC = "0x0a2c575ff341b41da136c9ccae74ec230a927a024d18f0dccf46d123f28f5f54"
 
+# Confirmed against a real provider (Infura) in practice: eth_getLogs
+# rejects any single fromBlock/toBlock span over 10,000 blocks with
+# {"code": -32602, "message": "range ... exceeds limit of 10000"} rather
+# than paginating for you. find_deployed_proxy() below scans backward from
+# the chain tip in chunks safely under that limit, stopping as soon as it
+# finds a match. RIA's own deployments are always recent (this whole
+# system is built during one hackathon), so LOG_LOOKBACK_MAX_BLOCKS --
+# several days' worth even on Sepolia's ~12s blocks -- comfortably covers
+# a real search without scanning arbitrarily far into chain history.
+LOG_LOOKBACK_CHUNK_BLOCKS = 9_000
+LOG_LOOKBACK_MAX_BLOCKS = 200_000
+
 
 class ProxyDeploymentError(RuntimeError):
     """Raised when a VerifiableFactory proxy can't be deployed, its address
@@ -104,15 +116,40 @@ def find_deployed_proxy(
     simulate a fresh deployment because this salt was already used
     successfully -- see module docstring. Returns the most recent match,
     or None if this factory has no such deployment on record for this
-    deployer/implementation pair.
+    deployer/implementation pair within LOG_LOOKBACK_MAX_BLOCKS.
+
+    Scans backward from the chain tip in LOG_LOOKBACK_CHUNK_BLOCKS-sized
+    windows (see that constant's comment for why a single unbounded query
+    doesn't work against a real provider), stopping at the first match --
+    the most recent deployment is almost always the relevant one, and this
+    avoids scanning further than necessary.
     """
-    logs = rpc.get_logs(factory_address, [PROXY_DEPLOYED_TOPIC, _topic_address(deployer)])
     target = implementation.lower()
+    topics = [PROXY_DEPLOYED_TOPIC, _topic_address(deployer)]
+
+    tip = rpc.block_number()
+    window_end = tip
+    scanned = 0
+    while scanned <= LOG_LOOKBACK_MAX_BLOCKS:
+        window_start = max(0, window_end - LOG_LOOKBACK_CHUNK_BLOCKS)
+        logs = rpc.get_logs(factory_address, topics, from_block=hex(window_start), to_block=hex(window_end))
+        match = _match_proxy_deployed_log(logs, target)
+        if match is not None:
+            return match
+        if window_start == 0:
+            break
+        scanned += window_end - window_start
+        window_end = window_start - 1
+
+    return None
+
+
+def _match_proxy_deployed_log(logs: list[dict], target_implementation_lower: str) -> str | None:
     for log in reversed(logs):  # most recent first
         proxy = "0x" + log["topics"][2][-40:]
         data = log["data"][2:]
         logged_implementation = "0x" + data[64:128][-40:]
-        if logged_implementation.lower() == target:
+        if logged_implementation.lower() == target_implementation_lower:
             return to_checksum_address(proxy)
     return None
 

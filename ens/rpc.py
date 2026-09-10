@@ -89,8 +89,9 @@ class EthRpc(Protocol):
     def send_raw_transaction(self, raw: bytes) -> str: ...
     def get_code(self, address: str) -> bytes: ...
     def get_transaction_receipt(self, tx_hash: str) -> dict[str, Any] | None: ...
+    def block_number(self) -> int: ...
     def get_logs(
-        self, address: str, topics: list[str | None], from_block: str = "earliest"
+        self, address: str, topics: list[str | None], from_block: str = "earliest", to_block: str = "latest"
     ) -> list[dict[str, Any]]: ...
 
 
@@ -133,12 +134,15 @@ class SepoliaRpcClient:
     def get_transaction_receipt(self, tx_hash: str) -> dict[str, Any] | None:
         return self._request("eth_getTransactionReceipt", [tx_hash])
 
+    def block_number(self) -> int:
+        return int(self._request("eth_blockNumber", []), 16)
+
     def get_logs(
-        self, address: str, topics: list[str | None], from_block: str = "earliest"
+        self, address: str, topics: list[str | None], from_block: str = "earliest", to_block: str = "latest"
     ) -> list[dict[str, Any]]:
         return self._request(
             "eth_getLogs",
-            [{"address": address, "topics": topics, "fromBlock": from_block, "toBlock": "latest"}],
+            [{"address": address, "topics": topics, "fromBlock": from_block, "toBlock": to_block}],
         )
 
     def is_connected(self) -> bool:

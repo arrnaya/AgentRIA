@@ -133,6 +133,13 @@ class FakeChain:
     # ens/factory.py's find_deployed_proxy() reads these the same shape a
     # real eth_getLogs response would return.
     _factory_logs: list[dict] = field(default_factory=list)
+    # One "block" per sent transaction -- simplistic, but enough to give
+    # get_logs()'s range filtering and block_number() something real to
+    # work with, so find_deployed_proxy()'s chunked backward scan
+    # (ens/factory.py) is exercised against genuine block-range behaviour
+    # rather than an unbounded fake that could never catch a provider's
+    # eth_getLogs range-limit error class.
+    _block_number: int = 1
 
     def __post_init__(self) -> None:
         # The root .eth registry always exists.
@@ -219,12 +226,39 @@ class FakeChain:
             return b"\x60\x80\x60\x40"  # non-empty stand-in bytecode
         return b""
 
+    def block_number(self) -> int:
+        return self._block_number
+
+    # Mirrors a real constraint (confirmed against Infura in practice --
+    # see ens/factory.py's LOG_LOOKBACK_CHUNK_BLOCKS comment): most
+    # providers reject a single eth_getLogs span over ~10,000 blocks
+    # outright. Enforcing the same limit here means find_deployed_proxy()
+    # regressing to an unbounded query would fail a test the same way it
+    # failed against the real provider, not just silently work because the
+    # fake never modelled the limit that actually bit in production.
+    MAX_LOG_RANGE_BLOCKS = 10_000
+
     def get_logs(
-        self, address: str, topics: list[str | None], from_block: str = "earliest"
+        self, address: str, topics: list[str | None], from_block: str = "earliest", to_block: str = "latest"
     ) -> list[dict]:
+        start = 0 if from_block == "earliest" else int(from_block, 16)
+        end = self._block_number if to_block == "latest" else int(to_block, 16)
+        if start > end:
+            # Real nodes reject an inverted range outright -- catching this
+            # here (rather than just returning no matches) keeps a test
+            # honest if find_deployed_proxy()'s chunk math ever produces one.
+            raise ChainRevert(f"FakeChain: get_logs fromBlock {start} > toBlock {end}")
+        if end - start > self.MAX_LOG_RANGE_BLOCKS:
+            raise ChainRevert(
+                f"FakeChain: range {end - start} exceeds limit of {self.MAX_LOG_RANGE_BLOCKS}"
+            )
+
         matches = []
         for log in self._factory_logs:
             if log["address"].lower() != address.lower():
+                continue
+            block = int(log["blockNumber"], 16)
+            if not (start <= block <= end):
                 continue
             if any(
                 want is not None and log["topics"][i].lower() != want.lower()
@@ -244,6 +278,7 @@ class FakeChain:
         value_wei = int.from_bytes(bytes(value), "big") if value else 0
 
         self._nonces[sender.lower()] = int.from_bytes(nonce, "big") + 1
+        self._block_number += 1
 
         if value_wei:
             # A plain value transfer (register.py funding a derived agent
@@ -310,6 +345,7 @@ class FakeChain:
                     "0x" + predicted[2:].lower().rjust(64, "0"),
                 ],
                 "data": "0x" + salt.to_bytes(32, "big").hex() + implementation[2:].lower().rjust(64, "0"),
+                "blockNumber": hex(self._block_number),
             }
         )
 

@@ -83,6 +83,38 @@ def test_deploy_proxy_redeploy_self_heals_to_the_same_address():
     assert second.lower() == first.lower()
 
 
+def test_find_deployed_proxy_scans_backward_across_multiple_chunks(monkeypatch):
+    """Regression test for a real live-run failure: find_deployed_proxy()
+    originally queried eth_getLogs with fromBlock="earliest", which a real
+    provider (Infura) rejected outright -- "range ... exceeds limit of
+    10000". It has to scan backward in bounded windows instead. Shrinks
+    the chunk size to 1 block so a deployment several blocks behind the
+    chain tip can only be found by actually iterating multiple windows,
+    not by accidentally fitting in the first one."""
+    import ens.factory as factory
+
+    monkeypatch.setattr(factory, "LOG_LOOKBACK_CHUNK_BLOCKS", 1)
+
+    chain = FakeChain()
+    admin = Account.from_key(ADMIN_KEY)
+    init_data = USER_REGISTRY_INITIALIZE_FN.encode_call(admin.address, SUBREGISTRY_ADMIN_ROLE_BITMAP)
+
+    deployed = deploy_proxy(chain, chain.factory_address, chain.user_registry_impl, 555, init_data, signer=admin)
+
+    # Push the chain several blocks past the deployment -- each of these
+    # plain transfers mines one more "block" in the fake (see
+    # tests/fake_chain.py's send_raw_transaction).
+    from ens.rpc import build_and_send
+
+    for _ in range(5):
+        build_and_send(chain, admin.address, b"", admin)
+
+    found = find_deployed_proxy(chain, chain.factory_address, admin.address, chain.user_registry_impl)
+
+    assert found is not None
+    assert found.lower() == deployed.lower()
+
+
 def test_find_deployed_proxy_returns_none_when_nothing_matches():
     """The other half of deploy_proxy()'s fallback: find_deployed_proxy()
     finding nothing must let a genuinely wrong factory/implementation
