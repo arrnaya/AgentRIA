@@ -310,12 +310,23 @@ intact while giving judges interactive, live proof of every decision and payment
 | `mcp_server/` — x402-gated MCP server + 5 priced tools | 🟡 Built & unit-tested — needs `BLOCKY402_FACILITATOR_URL`, `HEDERA_ACCOUNT_ID`, `ANTHROPIC_API_KEY`, `ETHERSCAN_API_KEY`, `COINGECKO_API_KEY` to run for real |
 | ORACLE — x402 payment client (`hedera/x402_client.py`, `agents/oracle.py`) | 🟡 Built & unit-tested — needs `HEDERA_ACCOUNT_ID`/`HEDERA_PRIVATE_KEY` + a running MCP server to pay for real |
 | AUDIT — HCS logging (`hedera/hcs_logger.py`, `agents/audit.py`) | 🟡 Built & unit-tested — needs an `HCS_TOPIC_ID` (one-time `HcsLogger.create_topic()` call) to log for real |
-| ENSv2 subname registration (`ens/`) | 🟡 Built & unit-tested against a hand-written chain fake — needs `ENS_PRIVATE_KEY` + `SEPOLIA_RPC_URL` to register live (`scripts/register_agents_live.py`) |
+| ENSv2 subname registration (`ens/`) | ✅ **Live on Sepolia** — all 4 subnames registered, isolation verified on-chain, independently re-confirmed with a fresh read-only `text()` call (see below) |
 | ERC-8004 agent identity | 🔜 Not started |
 | Live WebSocket feed → dashboard | 🔜 Backend emits real events now; `frontend-integrator` hasn't wired the dashboard to consume them yet |
 | Demo video | 🔜 Before submission |
 
-**151 tests pass with zero live credentials or network access required** — every module above mocks its external dependency (the Graph Gateway, Blocky402, Hedera SDK submission, Sepolia RPC) rather than skipping the test. What's missing everywhere is the same thing: real funded accounts and a live run to actually flip a [Build Checklist](#build-checklist) box, which only happens when `verify-checklist.mjs` (or a human, for anything that spends HBAR/ETH) proves it — see [Development Workflow](#development-workflow).
+**151+ tests pass with zero live credentials or network access required** — every module above mocks its external dependency (the Graph Gateway, Blocky402, Hedera SDK submission, Sepolia RPC) rather than skipping the test. What's missing everywhere else is the same thing: real funded accounts and a live run to actually flip a [Build Checklist](#build-checklist) box, which only happens when `verify-checklist.mjs` (or a human, for anything that spends HBAR/ETH) proves it — see [Development Workflow](#development-workflow). ENSv2 above is the first component to clear that bar for real.
+
+**Live on Sepolia right now** — resolve any of these yourself, no trust required:
+
+| Agent | ENS name | Operator (only key that can write it) |
+|---|---|---|
+| RECON | [`recon.agentria.eth`](https://sepolia.app.ens.domains/recon.agentria.eth) | `0x6968cc4b2674b5ca9559e9FD9EA7580c90EB8280` |
+| ORACLE | [`oracle.agentria.eth`](https://sepolia.app.ens.domains/oracle.agentria.eth) | `0x5f7F17577B858afDDff1685B8D7717724c878ff9` |
+| EXEC | [`exec.agentria.eth`](https://sepolia.app.ens.domains/exec.agentria.eth) | `0xb01689952da0624390ce5227B5CcA8cbBebEE3B8` |
+| AUDIT | [`audit.agentria.eth`](https://sepolia.app.ens.domains/audit.agentria.eth) | `0xcC257BDe07909f076eE19cFEA139F50b0134A388` |
+
+Shared Permissioned Resolver: [`0x5b5aF2C6EC2B9941ef073B0681984dB739fAca4B`](https://sepolia.etherscan.io/address/0x5b5aF2C6EC2B9941ef073B0681984dB739fAca4B) · Subregistry: `0xf1d8Bc687E5f160344Ee3015c0292eea5E5f564C` — `verify_isolation()` ran against the real chain after registration and confirmed none of the four operator keys can write another agent's node.
 
 The dashboard preview ships with static, clearly-labeled illustrative data so the finished
 interface can be evaluated ahead of the live pipeline going up. Progress from here is tracked
@@ -550,10 +561,10 @@ works for *any* AI agent, not just RIA, in about 20 seconds and no judge forgets
 
 | Requirement | How RIA satisfies it |
 |---|---|
-| Built on ENSv2 (Sepolia) | All agent subnames registered on the ENSv2 Sepolia deployment |
-| ENSv2 features central to the product | Permissioned Resolver gives each agent isolated record ownership — core to the identity model |
-| Functional demo, not hard-coded | Live ENS app resolution of `oracle.agentria.eth` with ENSIP-26 text records in the demo video |
-| Extra: AI agent namespace | 4 agents × subnames with ENSIP-26 metadata — endpoint, version, capabilities per agent |
+| Built on ENSv2 (Sepolia) | ✅ Live — all 4 agent subnames registered on the standard ENSv2 Beta Sepolia deployment, see [What's Live](#whats-live-in-this-repo-right-now) |
+| ENSv2 features central to the product | ✅ Permissioned Resolver's Enhanced Access Control gives each agent an isolated per-node grant — `verify_isolation()` confirmed on the real chain that no agent's key can write another's node |
+| Functional demo, not hard-coded | ✅ Live ENS app resolution of [`oracle.agentria.eth`](https://sepolia.app.ens.domains/oracle.agentria.eth) with real ENSIP-26 text records — resolvable by anyone right now, not staged for the demo video |
+| Extra: AI agent namespace | ✅ 4 agents × subnames with ENSIP-26 metadata (endpoint, version, capabilities) live on-chain |
 
 </details>
 
@@ -590,7 +601,7 @@ the boxes below on every push — check one off in a commit and the status block
 - [ ] ORACLE agent completing the full x402 payment flow end-to-end
 - [ ] HCS topic created, AUDIT agent writing entries
 - [ ] ERC-8004 agent identities registered
-- [ ] ENSv2 subnames registered with Permissioned Resolver
+- [x] ENSv2 subnames registered with Permissioned Resolver
 - [ ] Dashboard — all 4 panels updating with live data
 - [ ] External agent (Claude Desktop or `curl`) connecting to the MCP server and paying x402
 - [ ] SKILL.md written describing The Graph integration

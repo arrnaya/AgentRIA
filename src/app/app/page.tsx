@@ -28,11 +28,14 @@ const trace = [
   { name: "AUDIT", status: "Waiting", note: "Logs to HCS after EXEC completes" },
 ];
 
+// Live on Sepolia — registered via scripts/register_agents_live.py,
+// isolation verified on-chain (verify_isolation()). Not mock data: these
+// resolve for real right now at the ENS app links below.
 const identities = [
-  "recon.agentria.eth",
-  "oracle.agentria.eth",
-  "exec.agentria.eth",
-  "audit.agentria.eth",
+  { name: "recon.agentria.eth", operator: "0x6968...8280" },
+  { name: "oracle.agentria.eth", operator: "0x5f7F...8ff9" },
+  { name: "exec.agentria.eth", operator: "0xb016...EE3B8" },
+  { name: "audit.agentria.eth", operator: "0xcC25...A388" },
 ];
 
 export default function Dashboard() {
@@ -75,8 +78,9 @@ export default function Dashboard() {
         {/* PREVIEW BANNER */}
         <div className="flex flex-col gap-1 rounded-2xl border border-butter-deep/40 bg-butter px-5 py-4 text-sm text-[#6b4f10] shadow-[0_12px_30px_-18px_rgba(23,21,34,0.35)] sm:flex-row sm:items-center sm:justify-between">
           <p>
-            <span className="font-medium">Preview interface.</span> Data below illustrates the
-            finished dashboard — the live agent pipeline connects as each build milestone ships.
+            <span className="font-medium">Partially live.</span> Agent Identity below is real,
+            on-chain, and verified — everything else illustrates the finished dashboard until the
+            live pipeline connects.
           </p>
           <a href="https://github.com/arrnaya/AgentRIA" className="shrink-0 font-medium underline underline-offset-2">
             Follow build progress →
@@ -251,16 +255,27 @@ export default function Dashboard() {
           <Card>
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-ink">Agent Identity — ENSv2 (Sepolia)</p>
-              <span className="text-xs text-ink-faint">agentria.eth</span>
+              <span className="inline-flex items-center gap-1.5 text-xs text-mint-deep">
+                <span className="h-1.5 w-1.5 rounded-full bg-mint-deep" /> live · agentria.eth
+              </span>
             </div>
             <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {identities.map((id) => (
-                <div key={id} className="flex items-center justify-between rounded-xl bg-paper px-4 py-3 text-sm">
-                  <span className="font-mono text-xs text-ink-soft">{id}</span>
-                  <span className="text-xs text-ink-faint">pending</span>
-                </div>
+                <a
+                  key={id.name}
+                  href={`https://sepolia.app.ens.domains/${id.name}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex flex-col gap-1 rounded-xl bg-paper px-4 py-3 text-sm transition hover:bg-lavender/40"
+                >
+                  <span className="font-mono text-xs text-ink-soft">{id.name}</span>
+                  <span className="font-mono text-[11px] text-ink-faint">{id.operator}</span>
+                </a>
               ))}
             </div>
+            <p className="mt-3 text-xs text-ink-faint">
+              Isolation verified on-chain — no operator key above can write another agent&rsquo;s node. Click a name to resolve it yourself.
+            </p>
           </Card>
         </section>
 
