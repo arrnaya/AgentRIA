@@ -299,15 +299,20 @@ intact while giving judges interactive, live proof of every decision and payment
 | Public landing page (`/`) — [ria-agent.vercel.app](https://ria-agent.vercel.app) | ✅ Live |
 | Dashboard interface preview (`/app`) — [ria-agent.vercel.app/app](https://ria-agent.vercel.app/app) | ✅ Live (static preview, illustrative data) |
 | README with self-updating status | ✅ Live (this file) |
-| RECON — Subgraph Studio client + normalization (`graph/`, `agents/recon.py`) | 🟡 Built & unit-tested against mocked responses — needs a live `GRAPH_API_KEY` to run for real |
+| RECON — Subgraph Studio client + normalization (`graph/`, `agents/recon.py`) | 🟡 Built & unit-tested — needs a live `GRAPH_API_KEY` to run for real |
 | Substreams (liquidation event stream) | 🔜 Not started |
-| SCOUT / RISK — LangGraph agents | 🔜 Not started |
-| `mcp_server/` — x402-gated MCP server + 5 priced tools | 🔜 Not started |
-| ORACLE — MCP client + x402 payment flow | 🔜 Not started |
-| AUDIT — HCS logging | 🔜 Not started |
-| ENSv2 subname registration | 🔜 Not started |
-| Live WebSocket feed → dashboard | 🔜 Not started |
+| SCOUT / RISK / EXEC — LangGraph agents (`agents/scout.py`, `risk.py`, `exec.py`) | 🟡 Built & unit-tested, no live dependency needed — these run entirely on RECON's output |
+| `pipeline/graph.py` — full RECON→SCOUT→RISK→ORACLE→EXEC→AUDIT StateGraph | 🟡 Built & unit-tested — wired end-to-end, not yet run against live credentials |
+| `pipeline/ws_server.py` / `runner.py` — WebSocket feed + CLI entrypoint | 🟡 Built & unit-tested — not yet run live against the dashboard |
+| `mcp_server/` — x402-gated MCP server + 5 priced tools | 🟡 Built & unit-tested — needs `BLOCKY402_FACILITATOR_URL`, `HEDERA_ACCOUNT_ID`, `ANTHROPIC_API_KEY`, `ETHERSCAN_API_KEY`, `COINGECKO_API_KEY` to run for real |
+| ORACLE — x402 payment client (`hedera/x402_client.py`, `agents/oracle.py`) | 🟡 Built & unit-tested — needs `HEDERA_ACCOUNT_ID`/`HEDERA_PRIVATE_KEY` + a running MCP server to pay for real |
+| AUDIT — HCS logging (`hedera/hcs_logger.py`, `agents/audit.py`) | 🟡 Built & unit-tested — needs an `HCS_TOPIC_ID` (one-time `HcsLogger.create_topic()` call) to log for real |
+| ENSv2 subname registration (`ens/`) | 🟡 Built & unit-tested against a hand-written chain fake — needs `ENS_PRIVATE_KEY` + `SEPOLIA_RPC_URL` to register live (`scripts/register_agents_live.py`) |
+| ERC-8004 agent identity | 🔜 Not started |
+| Live WebSocket feed → dashboard | 🔜 Backend emits real events now; `frontend-integrator` hasn't wired the dashboard to consume them yet |
 | Demo video | 🔜 Before submission |
+
+**151 tests pass with zero live credentials or network access required** — every module above mocks its external dependency (the Graph Gateway, Blocky402, Hedera SDK submission, Sepolia RPC) rather than skipping the test. What's missing everywhere is the same thing: real funded accounts and a live run to actually flip a [Build Checklist](#build-checklist) box, which only happens when `verify-checklist.mjs` (or a human, for anything that spends HBAR/ETH) proves it — see [Development Workflow](#development-workflow).
 
 The dashboard preview ships with static, clearly-labeled illustrative data so the finished
 interface can be evaluated ahead of the live pipeline going up. Progress from here is tracked
@@ -353,25 +358,25 @@ AgentRIA/
 │   │   ├── layout.tsx
 │   │   └── globals.css
 │   └── components/            # Shared UI (Nav, Footer, Brand, Card, Pill…)
-├── agents/
-│   ├── recon.py                # ✅ built — Subgraph Studio ingestion + normalization
-│   └── scout.py · risk.py · oracle.py · exec.py · audit.py   # 🔜
+├── agents/                      # ✅ all six built — recon · scout · risk · oracle · exec · audit
 ├── graph/
 │   ├── subgraph_client.py      # ✅ built — Graph Gateway async client
 │   ├── queries/messari.py      # ✅ built — DEX + lending query templates
 │   └── substreams_client.py    # 🔜
-├── mcp_server/                 # 🔜 NEW in v3 — standalone x402-gated MCP server
-│   ├── server.py               #     MCP server (HTTP/SSE mode)
-│   ├── x402_middleware.py      #     Blocky402 payment verification middleware
-│   ├── tools/                  #     gas_price · sentiment · risk_score · price_feed · liquidation_stream
-│   └── pricing.py              #     per-tool HBAR price config
-├── hedera/                     # 🔜 x402_client.py · hcs_logger.py · wallet.py
-├── ens/                        # 🔜 register.py · resolver.py
-├── pipeline/
-│   ├── state.py                 # ✅ built — typed state threaded through the StateGraph
-│   └── graph.py · runner.py · ws_server.py   # 🔜
-├── tests/                       # ✅ pytest + respx, mocked Graph Gateway responses
-├── .github/workflows/           # update-status.yml — keeps the Live Status block current
+├── mcp_server/                  # ✅ built — x402-gated MCP server (NEW in v3)
+│   ├── server.py                #     FastMCP server (HTTP/SSE mode)
+│   ├── x402_middleware.py       #     Blocky402 payment verification middleware
+│   ├── tools/                   #     gas_price · sentiment · risk_score · price_feed · liquidation_stream
+│   └── pricing.py               #     per-tool HBAR price config
+├── hedera/                      # ✅ built — x402_client.py · hcs_logger.py · wallet.py
+├── ens/                         # ✅ built — register.py · resolver.py · accounts.py · rpc.py
+├── pipeline/                    # ✅ built — state.py · graph.py · runner.py · ws_server.py
+├── scripts/                     # ✅ built — one-off live scripts (never wired into CI):
+│   ├── live_smoke_test.py       #     one real x402 payment end-to-end
+│   └── register_agents_live.py  #     live ENSv2 subname registration
+├── tests/                       # ✅ 151 tests, all mocked — no live credentials required to run them
+├── .claude/agents/               # the dev-team subagent briefs — see Development Workflow
+├── .github/workflows/           # update-status.yml, tests.yml — CI + the Live Status block
 ├── assets/                      # Reference designs & project proposal
 ├── requirements.txt              # ✅ built
 └── SKILL.md                      # 🔜 required for The Graph track
@@ -411,7 +416,12 @@ Environment variables (`GRAPH_API_KEY`, `HEDERA_ACCOUNT_ID`, …) are documented
 | `ANTHROPIC_API_KEY` | console.anthropic.com | Pay per token — minimal for a hackathon build |
 | `ETHERSCAN_API_KEY` | etherscan.io/apis | Free tier (5 calls/sec) |
 | `COINGECKO_API_KEY` | coingecko.com/en/api | Free tier (30 calls/min) |
-| `ENS_PRIVATE_KEY` | Sepolia wallet with test ETH | Free from a Sepolia faucet |
+| `BLOCKY402_FACILITATOR_URL` | blocky402.com (hosted) or self-hosted, see `hedera-dev/scaffold-hbar`'s `templates/x402-pay-per-use` branch | Free — Blocky402 is open access on Hedera testnet |
+| `HCS_TOPIC_ID` | One-time `HcsLogger.create_topic()` call (`hedera/hcs_logger.py`) | Small fixed Hedera network fee to create |
+| `MCP_SERVER_URL` | Wherever `mcp_server/server.py` is running (default `http://127.0.0.1:8000/mcp`) | n/a — your own server |
+| `ENS_PRIVATE_KEY` | Sepolia wallet with test ETH, owning `ria.eth` | Free from a Sepolia faucet |
+| `SEPOLIA_RPC_URL` | Infura / Alchemy / a public Sepolia gateway | Free tier |
+| `ENS_RESOLVER_ADDRESS` *(optional)* | `ria.eth`'s ENSv2 Permissioned Resolver proxy — check `sepolia.app.ens.domains/ria.eth` | Falls back to Sepolia's standard `PublicResolver` if unset |
 
 ## Running Locally
 
