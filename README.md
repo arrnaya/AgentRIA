@@ -430,7 +430,7 @@ Environment variables (`GRAPH_API_KEY`, `HEDERA_ACCOUNT_ID`, …) are documented
 | `ANTHROPIC_API_KEY` | console.anthropic.com | Pay per token — minimal for a hackathon build |
 | `ETHERSCAN_API_KEY` | etherscan.io/apis | Free tier (5 calls/sec) |
 | `COINGECKO_API_KEY` | coingecko.com/en/api | Free tier (30 calls/min) |
-| `BLOCKY402_FACILITATOR_URL` | blocky402.com (hosted) or self-hosted, see `hedera-dev/scaffold-hbar`'s `templates/x402-pay-per-use` branch | Free — Blocky402 is open access on Hedera testnet |
+| `BLOCKY402_FACILITATOR_URL` | `https://api.testnet.blocky402.com` — confirmed live, no signup/API key | Free — Blocky402 is open access on Hedera testnet |
 | `HCS_TOPIC_ID` | One-time `HcsLogger.create_topic()` call (`hedera/hcs_logger.py`) | Small fixed Hedera network fee to create |
 | `MCP_SERVER_URL` | Wherever `mcp_server/server.py` is running (default `http://127.0.0.1:8000/mcp`) | n/a — your own server |
 | `ENS_PRIVATE_KEY` | Sepolia wallet with test ETH, owning `agentria.eth` | Free from a Sepolia faucet |

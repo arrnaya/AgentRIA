@@ -11,11 +11,12 @@ script directly — export them, or `source .env` yourself first):
 
   - HEDERA_ACCOUNT_ID / HEDERA_PRIVATE_KEY — a funded Hedera TESTNET
     account (free from the Hedera Testnet Portal faucet).
-  - BLOCKY402_FACILITATOR_URL — a running Blocky402-compatible x402
-    facilitator on Hedera testnet (Blocky402's hosted testnet endpoint,
-    or a self-hosted hedera-dev/scaffold-hbar facilitator — see
+  - BLOCKY402_FACILITATOR_URL — confirmed live and working, no signup or
+    API key: https://api.testnet.blocky402.com (verified via a plain
+    `GET /supported` -- returns "hedera:testnet" with a real fee-payer
+    account). A self-hosted hedera-dev/scaffold-hbar facilitator (see
     facilitator/README.md on that repo's templates/x402-pay-per-use
-    branch for how to run one).
+    branch) is the fallback if Blocky402's hosted one is ever down.
   - ETHERSCAN_API_KEY — get_gas_price (the tool this script calls) needs
     it; free from etherscan.io/apis.
 
