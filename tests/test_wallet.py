@@ -1,12 +1,14 @@
 """Tests for hedera/wallet.py — no live credentials, no network.
 
-Mocks the hiero_sdk_python SDK surface (Client, AccountId, PrivateKey,
+Mocks the hiero_sdk_python SDK surface (Client, AccountId,
 CryptoGetAccountBalanceQuery) the same way test_subgraph_client.py mocks
-httpx: substitute the names hedera.wallet imported, never touch the network.
-Also mocks the mirror-node key-type lookup `_load_private_key` added to
-disambiguate ED25519 vs ECDSA private keys — see its docstring for the real
-live-run bug (a "signature_invalid" 402 from the facilitator) this exists
-to prevent.
+httpx: substitute the names hedera.wallet imported, never touch the
+network. Private-key loading itself now lives in hedera/key_loader.py
+(shared with hedera/hcs_logger.py) — see tests/test_key_loader.py for
+that module's own coverage, including the real live-run bug (a
+"signature_invalid" 402 from the facilitator) it exists to prevent. Here
+it's patched at the source (`hedera.key_loader.httpx`/`PrivateKey`) since
+that's where `hedera.wallet.HederaWallet.from_env` now delegates to.
 """
 
 from __future__ import annotations
@@ -15,6 +17,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+import hedera.key_loader as key_loader_module
 import hedera.wallet as wallet_module
 from hedera.wallet import HederaWallet, WalletConfigError
 
@@ -68,7 +71,7 @@ class _FakePrivateKey:
 def _patch_sdk(monkeypatch, fake_client: MagicMock | None = None):
     fake_client = fake_client or MagicMock(name="Client")
     monkeypatch.setattr(wallet_module, "AccountId", _FakeAccountId)
-    monkeypatch.setattr(wallet_module, "PrivateKey", _FakePrivateKey)
+    monkeypatch.setattr(key_loader_module, "PrivateKey", _FakePrivateKey)
     monkeypatch.setattr(
         wallet_module, "Client", MagicMock(for_testnet=MagicMock(return_value=fake_client))
     )
@@ -77,13 +80,13 @@ def _patch_sdk(monkeypatch, fake_client: MagicMock | None = None):
 
 
 def _patch_mirror_node(monkeypatch, *, key_type: str = "ECDSA_SECP256K1", public_key_hex: str = DEFAULT_PUBLIC_KEY_HEX):
-    """Mock the mirror-node GET this module makes to learn an account's real
-    key algorithm + public key, without any network access."""
+    """Mock the mirror-node GET hedera/key_loader.py makes to learn an
+    account's real key algorithm + public key, without any network access."""
     fake_response = MagicMock()
     fake_response.raise_for_status.return_value = None
     fake_response.json.return_value = {"key": {"_type": key_type, "key": public_key_hex}}
     fake_get = MagicMock(return_value=fake_response)
-    monkeypatch.setattr(wallet_module.httpx, "get", fake_get)
+    monkeypatch.setattr(key_loader_module.httpx, "get", fake_get)
     return fake_get
 
 
@@ -91,7 +94,7 @@ def _patch_mirror_node_failure(monkeypatch, exc: Exception):
     def _raise(*args, **kwargs):
         raise exc
 
-    monkeypatch.setattr(wallet_module.httpx, "get", _raise)
+    monkeypatch.setattr(key_loader_module.httpx, "get", _raise)
 
 
 def test_from_env_requires_account_id(monkeypatch):

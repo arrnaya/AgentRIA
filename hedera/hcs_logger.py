@@ -35,6 +35,8 @@ from hiero_sdk_python import (
     TopicMessageSubmitTransaction,
 )
 
+from hedera.key_loader import KeyLoadError, load_private_key
+
 logger = logging.getLogger("ria.hcs_logger")
 
 
@@ -86,7 +88,21 @@ class HcsLogger:
 
         try:
             account_id = AccountId.from_string(account_id_str)
-            private_key = PrivateKey.from_string(private_key_str)
+        except Exception as exc:  # pragma: no cover - defensive, SDK-specific
+            raise HcsConfigError(f"Invalid Hedera credentials or topic id: {exc}") from exc
+
+        try:
+            # See hedera/key_loader.py's docstring: PrivateKey.from_string()
+            # is ambiguous between ED25519 and ECDSA for a raw 32-byte key
+            # and silently guesses wrong for the ECDSA accounts Hedera's
+            # testnet portal issues by default.
+            private_key = load_private_key(account_id_str, private_key_str)
+        except KeyLoadError as exc:
+            raise HcsConfigError(str(exc)) from exc
+        except Exception as exc:  # pragma: no cover - defensive, SDK-specific
+            raise HcsConfigError(f"Invalid Hedera credentials or topic id: {exc}") from exc
+
+        try:
             topic_id = TopicId.from_string(topic_id_str)
         except Exception as exc:  # pragma: no cover - defensive, SDK-specific
             raise HcsConfigError(f"Invalid Hedera credentials or topic id: {exc}") from exc

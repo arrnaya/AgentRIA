@@ -16,7 +16,6 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-import httpx
 from hiero_sdk_python import (
     AccountId,
     Client,
@@ -25,60 +24,11 @@ from hiero_sdk_python import (
     PrivateKey,
 )
 
-# Read-only, unauthenticated: Hedera's public mirror node, used only to look
-# up which key algorithm (ED25519 vs ECDSA_secp256k1) an account was created
-# with -- never to submit anything.
-MIRROR_NODE_ACCOUNTS_URL = "https://testnet.mirrornode.hedera.com/api/v1/accounts"
+from hedera.key_loader import KeyLoadError, load_private_key
 
 
 class WalletConfigError(RuntimeError):
     """Raised when required Hedera credentials are missing or malformed."""
-
-
-def _load_private_key(account_id_str: str, private_key_str: str) -> PrivateKey:
-    """Load `private_key_str`, disambiguated against the real key algorithm
-    of `account_id_str` on testnet.
-
-    `PrivateKey.from_string()` is ambiguous for a 32-byte raw key: any 32
-    bytes is also a valid Ed25519 seed, so it silently guesses Ed25519 first
-    even for an ECDSA account (which is what Hedera's testnet portal issues
-    by default, for EVM-address compatibility) -- producing a key that
-    signs with the wrong algorithm entirely. Every signature it makes is
-    then valid cryptographically but for the wrong public key, which the
-    facilitator's own signature check rejects as
-    invalid_exact_hedera_payload_signature_invalid with no indication the
-    key type was the actual problem. So this looks up the account's real
-    key type and public key from the mirror node first and loads + verifies
-    against that, rather than guessing.
-    """
-    try:
-        response = httpx.get(f"{MIRROR_NODE_ACCOUNTS_URL}/{account_id_str}", timeout=10.0)
-        response.raise_for_status()
-        key_info = response.json()["key"]
-        key_type = key_info["_type"]
-        onchain_public_key = key_info["key"].lower()
-    except Exception as exc:
-        raise WalletConfigError(
-            f"Could not look up {account_id_str}'s key type from the Hedera testnet "
-            f"mirror node (needed to load HEDERA_PRIVATE_KEY with the right "
-            f"algorithm -- ED25519 vs ECDSA -- rather than guessing wrong): {exc}"
-        ) from exc
-
-    if key_type == "ECDSA_SECP256K1":
-        private_key = PrivateKey.from_string_ecdsa(private_key_str)
-    elif key_type == "ED25519":
-        private_key = PrivateKey.from_string_ed25519(private_key_str)
-    else:
-        raise WalletConfigError(f"Unrecognized Hedera key type for {account_id_str}: {key_type!r}")
-
-    derived_public_key = private_key.public_key().to_string_raw().lower()
-    if derived_public_key != onchain_public_key:
-        raise WalletConfigError(
-            f"HEDERA_PRIVATE_KEY does not match the {key_type} public key on file "
-            f"for {account_id_str} on testnet -- wrong key for this account id."
-        )
-
-    return private_key
 
 
 @dataclass
@@ -129,9 +79,9 @@ class HederaWallet:
             ) from exc
 
         try:
-            private_key = _load_private_key(account_id_str, private_key_str)
-        except WalletConfigError:
-            raise
+            private_key = load_private_key(account_id_str, private_key_str)
+        except KeyLoadError as exc:
+            raise WalletConfigError(str(exc)) from exc
         except Exception as exc:  # pragma: no cover - defensive, SDK-specific
             raise WalletConfigError(
                 f"HEDERA_PRIVATE_KEY is not a valid Hedera private key: {exc}"

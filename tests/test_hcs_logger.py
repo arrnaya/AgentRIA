@@ -11,7 +11,10 @@ from unittest.mock import MagicMock
 import pytest
 
 import hedera.hcs_logger as hcs_module
+import hedera.key_loader as key_loader_module
 from hedera.hcs_logger import HcsConfigError, HcsLogger, HcsSubmitError
+
+DEFAULT_PUBLIC_KEY_HEX = "aabbccddeeff"
 
 
 class _FakeAccountId:
@@ -26,13 +29,34 @@ class _FakeAccountId:
         return self.raw
 
 
+class _FakePublicKey:
+    def __init__(self, raw_hex: str):
+        self._raw_hex = raw_hex
+
+    def to_string_raw(self) -> str:
+        return self._raw_hex
+
+
 class _FakePrivateKey:
+    public_key_hex = DEFAULT_PUBLIC_KEY_HEX
+
     def __init__(self, raw: str):
         self.raw = raw
 
     @classmethod
     def from_string(cls, s: str) -> "_FakePrivateKey":
         return cls(s)
+
+    @classmethod
+    def from_string_ecdsa(cls, s: str) -> "_FakePrivateKey":
+        return cls(s)
+
+    @classmethod
+    def from_string_ed25519(cls, s: str) -> "_FakePrivateKey":
+        return cls(s)
+
+    def public_key(self) -> _FakePublicKey:
+        return _FakePublicKey(self.public_key_hex)
 
 
 class _FakeTopicId:
@@ -50,9 +74,16 @@ class _FakeTopicId:
 def _patch_sdk(monkeypatch, fake_client: MagicMock | None = None):
     fake_client = fake_client or MagicMock(name="Client")
     monkeypatch.setattr(hcs_module, "AccountId", _FakeAccountId)
-    monkeypatch.setattr(hcs_module, "PrivateKey", _FakePrivateKey)
+    monkeypatch.setattr(key_loader_module, "PrivateKey", _FakePrivateKey)
     monkeypatch.setattr(hcs_module, "TopicId", _FakeTopicId)
     monkeypatch.setattr(hcs_module, "Client", MagicMock(for_testnet=MagicMock(return_value=fake_client)))
+    _FakePrivateKey.public_key_hex = DEFAULT_PUBLIC_KEY_HEX
+
+    fake_response = MagicMock()
+    fake_response.raise_for_status.return_value = None
+    fake_response.json.return_value = {"key": {"_type": "ECDSA_SECP256K1", "key": DEFAULT_PUBLIC_KEY_HEX}}
+    monkeypatch.setattr(key_loader_module.httpx, "get", MagicMock(return_value=fake_response))
+
     return fake_client
 
 
@@ -74,6 +105,23 @@ def test_from_env_requires_all_three(monkeypatch):
     _patch_sdk(monkeypatch)
     _env(monkeypatch, HCS_TOPIC_ID=None)
     with pytest.raises(HcsConfigError, match="HCS_TOPIC_ID"):
+        HcsLogger.from_env()
+
+
+def test_from_env_rejects_key_not_matching_account(monkeypatch):
+    """Regression coverage mirroring test_wallet.py's: AUDIT shares the
+    same key_loader.load_private_key fix ORACLE's wallet needed, so a
+    mismatched private key must fail loudly here too, not as a cryptic
+    on-chain signature rejection when AUDIT tries to submit to HCS."""
+    _patch_sdk(monkeypatch)
+    fake_response = MagicMock()
+    fake_response.raise_for_status.return_value = None
+    fake_response.json.return_value = {"key": {"_type": "ECDSA_SECP256K1", "key": "onchain-key"}}
+    monkeypatch.setattr(key_loader_module.httpx, "get", MagicMock(return_value=fake_response))
+    _FakePrivateKey.public_key_hex = "different-key"
+    _env(monkeypatch)
+
+    with pytest.raises(HcsConfigError, match="does not match"):
         HcsLogger.from_env()
 
 
