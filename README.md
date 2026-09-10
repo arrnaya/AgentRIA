@@ -29,9 +29,9 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 | **Current phase** | Architecture finalized (v3) — implementation starting |
 | **Build checklist** | `░░░░░░░░░░░░░░░░░░░░` 0/15 (0%) — verified live where possible, not self-reported |
 | **Time to ETHGlobal deadline** | 3d 10h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`6be889e`](https://github.com/arrnaya/AgentRIA/commit/6be889ec7280449c06a751ad4dfce878c10fd6c0) Rename ENS parent domain from ria.eth to agentria.eth (already registered) — Arrnaya |
-| **Total commits** | 49 |
-| **Last updated** | 2026-09-10 05:43 UTC |
+| **Latest commit** | [`44adf7e`](https://github.com/arrnaya/AgentRIA/commit/44adf7ee645bb403d1e6e81bfa06e94a1417925b) Add scripts/set_github_secrets.sh for setting repo secrets from .env.local — Arrnaya |
+| **Total commits** | 51 |
+| **Last updated** | 2026-09-10 05:44 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
