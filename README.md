@@ -26,12 +26,12 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 <!-- STATUS:START -->
 | | |
 |---|---|
-| **Current phase** | In progress — 1/15 build milestones verified |
-| **Build checklist** | `█░░░░░░░░░░░░░░░░░░░` 1/15 (7%) — verified live where possible, not self-reported |
+| **Current phase** | In progress — 3/15 build milestones verified |
+| **Build checklist** | `████░░░░░░░░░░░░░░░░` 3/15 (20%) — verified live where possible, not self-reported |
 | **Time to ETHGlobal deadline** | 3d 6h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`6c129a1`](https://github.com/arrnaya/AgentRIA/commit/6c129a17b7ea0c8b0b3fdf1e7192731b31241944) Implement streamable-http's session handshake in the x402 client — Arrnaya |
-| **Total commits** | 80 |
-| **Last updated** | 2026-09-10 09:13 UTC |
+| **Latest commit** | [`b4669ff`](https://github.com/arrnaya/AgentRIA/commit/b4669ffef2f5d726d353407445e460ac021f1f0c) x402 payment flow is live on Hedera testnet -- first real payment confirmed — Arrnaya |
+| **Total commits** | 82 |
+| **Last updated** | 2026-09-10 09:17 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
