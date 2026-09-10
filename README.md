@@ -28,10 +28,10 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 |---|---|
 | **Current phase** | Architecture finalized (v3) — implementation starting |
 | **Build checklist** | `░░░░░░░░░░░░░░░░░░░░` 0/15 (0%) — verified live where possible, not self-reported |
-| **Time to ETHGlobal deadline** | 3d 9h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`e7b2759`](https://github.com/arrnaya/AgentRIA/commit/e7b275939d95e8e2d14b90915677295eeb37e633) Fix live registration hang: wait for tx confirmation, resumption, pre-flight check — Arrnaya |
-| **Total commits** | 60 |
-| **Last updated** | 2026-09-10 06:52 UTC |
+| **Time to ETHGlobal deadline** | 3d 8h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
+| **Latest commit** | [`37c1239`](https://github.com/arrnaya/AgentRIA/commit/37c12393699cda1bfdcf08e92c4196f1ce3cc392) Fix live registration hang #2: gas price buffer + auto-rebroadcast + self-clearing — Arrnaya |
+| **Total commits** | 62 |
+| **Last updated** | 2026-09-10 07:03 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
