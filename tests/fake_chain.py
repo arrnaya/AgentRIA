@@ -58,11 +58,18 @@ class FakeChain:
     operator_approvals: dict[tuple[str, str], bool] = field(default_factory=dict)
     texts: dict[tuple[bytes, str], str] = field(default_factory=dict)
     _nonces: dict[str, int] = field(default_factory=dict)
+    _balances: dict[str, int] = field(default_factory=dict)
 
     def set_owner(self, node: bytes, owner: str) -> None:
         """Test/setup helper equivalent to the registry recording an owner
         (what a real setSubnodeRecord call would have done)."""
         self.owners[node] = owner
+
+    def get_balance(self, address: str) -> int:
+        """Wei balance credited to `address` by plain transfers so far —
+        lets tests assert register.py's agent-funding step actually ran,
+        not just that it didn't raise."""
+        return self._balances.get(address.lower(), 0)
 
     # --- EthRpc protocol -------------------------------------------------
 
@@ -94,12 +101,25 @@ class FakeChain:
 
     def send_raw_transaction(self, raw: bytes) -> str:
         sender = Account.recover_transaction(raw)
-        nonce, _gas_price, _gas, to, _value, data, *_sig = rlp.decode(raw)
+        nonce, _gas_price, _gas, to, value, data, *_sig = rlp.decode(raw)
         to_address = "0x" + bytes(to).hex()
         data = bytes(data)
-        selector, payload = data[:4], data[4:]
+        value_wei = int.from_bytes(bytes(value), "big") if value else 0
 
         self._nonces[sender.lower()] = int.from_bytes(nonce, "big") + 1
+
+        if value_wei:
+            # A plain value transfer (register.py funding a derived agent
+            # account) -- no gas deduction modelled, this fake only tracks
+            # transfers so tests can assert funding actually happened.
+            self._balances[to_address.lower()] = self.get_balance(to_address) + value_wei
+
+        if not data:
+            # No calldata: this was a plain transfer, not a contract call --
+            # nothing left to decode/authorise.
+            return "0x" + "44" * 32
+
+        selector, payload = data[:4], data[4:]
 
         if to_address.lower() == self.registry_address.lower() and selector == SET_SUBNODE_RECORD_FN.selector:
             parent_node, label, owner, _resolver, _ttl = self._decode(SET_SUBNODE_RECORD_FN, payload)

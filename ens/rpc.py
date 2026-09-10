@@ -82,10 +82,14 @@ def _hex(data: bytes) -> str:
     return "0x" + data.hex()
 
 
-def build_and_send(rpc: EthRpc, to: str, data: bytes, signer: LocalAccount) -> str:
+def build_and_send(rpc: EthRpc, to: str, data: bytes, signer: LocalAccount, value: int = 0) -> str:
     """Build a legacy transaction calling `to` with `data`, sign it with
     `signer`, and broadcast it. Shared by resolver.py and register.py so
     every on-chain write goes through the exact same tx-construction path.
+
+    `value` (wei) is 0 for every contract call here except the one funding
+    transfer register.py sends each derived agent account before that
+    agent signs its own transaction — see register.py's `FUNDING_WEI`.
     """
     tx = {
         "to": to,
@@ -95,7 +99,7 @@ def build_and_send(rpc: EthRpc, to: str, data: bytes, signer: LocalAccount) -> s
         "chainId": SEPOLIA_CHAIN_ID,
         "gas": DEFAULT_GAS,
         "gasPrice": rpc.gas_price(),
-        "value": 0,
+        "value": value,
     }
     signed = signer.sign_transaction(tx)
     raw = getattr(signed, "raw_transaction", None) or getattr(signed, "rawTransaction", None)

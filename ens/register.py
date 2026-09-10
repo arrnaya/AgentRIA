@@ -36,6 +36,17 @@ SET_SUBNODE_RECORD_FN = Function(
     "setSubnodeRecord", ("bytes32", "bytes32", "address", "address", "uint64")
 )
 
+# register_subname() has each agent sign its OWN set_text transactions
+# (see that function's docstring, step 3) -- and on Sepolia, like any EVM
+# chain, whoever signs a transaction pays its gas from their own balance.
+# A freshly-derived agent account (ens/accounts.py) starts at zero ETH, so
+# without funding it first, its first set_text would revert with
+# "insufficient funds" before ever reaching the resolver's authorised()
+# check. 0.005 ETH covers this table's handful of records per agent many
+# times over at Sepolia's typical gas price, funded from the one admin
+# wallet the operator already provides -- no extra faucet trip per agent.
+FUNDING_WEI = 5_000_000_000_000_000  # 0.005 ETH
+
 
 @dataclass
 class SubnameRegistration:
@@ -64,7 +75,9 @@ def register_subname(
        as this node's registry owner, approves *exactly* this agent's own
        derived address to write this node's records. No other node is
        touched, so no other agent's address is ever approved here.
-    3. resolver.set_text(node, key, value, signer=agent_account) for each
+    3. A plain ETH transfer, admin -> agent_account, funding the gas this
+       agent needs to sign its own transactions next (see FUNDING_WEI).
+    4. resolver.set_text(node, key, value, signer=agent_account) for each
        ENSIP-26 record -- signed by the agent's *own* derived key, not
        admin's, so a live run exercises the real write path an agent would
        use, not a shortcut through the owner account.
@@ -80,6 +93,12 @@ def register_subname(
     agent_account = derive_agent_account(admin, identity.agent_id)
     resolver.grant_operator(node, agent_account.address, signer=admin)
     logger.info("register: %s write access granted to %s only", identity.name, agent_account.address)
+
+    build_and_send(rpc, agent_account.address, b"", admin, value=FUNDING_WEI)
+    logger.info(
+        "register: funded %s with %.4f ETH for its own set_text gas",
+        agent_account.address, FUNDING_WEI / 1e18,
+    )
 
     records = identity.text_records()
     for key, value in records.items():

@@ -4,7 +4,7 @@ from eth_account import Account
 from ens.accounts import derive_agent_account
 from ens.constants import DEFAULT_PUBLIC_RESOLVER_ADDRESS, PARENT_NAME, SUBNAME_TABLE
 from ens.namehash import namehash
-from ens.register import register_all, register_subname, verify_isolation
+from ens.register import FUNDING_WEI, register_all, register_subname, verify_isolation
 from ens.resolver import PermissionedResolver, ResolverPermissionError
 from tests.fake_chain import FakeChain
 
@@ -60,6 +60,18 @@ def test_register_all_registers_the_fixed_four_agent_table():
     # every agent got its own distinct operator address
     operators = {r.operator_address for r in registrations}
     assert len(operators) == 4
+
+
+def test_register_subname_funds_the_agents_derived_account():
+    """The agent's derived key signs its own set_text calls next and would
+    revert with insufficient funds on a real chain if never funded --
+    assert register_subname() actually sends it gas money first."""
+    chain, admin, resolver = _setup()
+    identity = SUBNAME_TABLE["oracle"]
+
+    result = register_subname(identity, rpc=chain, resolver=resolver, admin=admin)
+
+    assert chain.get_balance(result.operator_address) == FUNDING_WEI
 
 
 def test_audit_record_includes_hcs_topic_id():
