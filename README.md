@@ -29,9 +29,9 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 | **Current phase** | Architecture finalized (v3) — implementation starting |
 | **Build checklist** | `░░░░░░░░░░░░░░░░░░░░` 0/15 (0%) — verified live where possible, not self-reported |
 | **Time to ETHGlobal deadline** | 3d 11h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`3665d50`](https://github.com/arrnaya/AgentRIA/commit/3665d50a49d9fdd5f057a0dfe2269faedbc3063f) Fix: fund each derived agent account before it signs its own transactions — Arrnaya |
-| **Total commits** | 45 |
-| **Last updated** | 2026-09-10 04:03 UTC |
+| **Latest commit** | [`c904a20`](https://github.com/arrnaya/AgentRIA/commit/c904a209f515229c20e0813acd6ea02ef5867be9) README: reflect that the backend is now built end-to-end, not just RECON — Arrnaya |
+| **Total commits** | 47 |
+| **Last updated** | 2026-09-10 04:05 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
