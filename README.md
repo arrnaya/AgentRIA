@@ -29,9 +29,9 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 | **Current phase** | In progress — 4/15 build milestones verified |
 | **Build checklist** | `█████░░░░░░░░░░░░░░░` 4/15 (27%) — verified live where possible, not self-reported |
 | **Time to ETHGlobal deadline** | 2d 16h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`4b0bee5`](https://github.com/arrnaya/AgentRIA/commit/4b0bee57ce491cfd3cc176b26b293105782715d5) HCS audit logging is live on Hedera testnet -- first real message confirmed — Arrnaya |
-| **Total commits** | 91 |
-| **Last updated** | 2026-09-10 23:07 UTC |
+| **Latest commit** | [`37ce3c2`](https://github.com/arrnaya/AgentRIA/commit/37ce3c257d1d6bd95b8570a6bd4ba0c985470e64) Fix ERC-8004 contract deploy uploading pre-decoded bytecode instead of hex text — Arrnaya |
+| **Total commits** | 93 |
+| **Last updated** | 2026-09-10 23:15 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
