@@ -19,11 +19,19 @@ from eth_account.signers.local import LocalAccount
 
 from ens.constants import SEPOLIA_CHAIN_ID
 
-# A single storage-slot text/approval write on Sepolia comfortably fits
-# under this; generous on purpose so we don't need a separate
-# eth_estimateGas round trip (and thus a bigger mock surface in tests) for
-# calls this cheap and predictable.
-DEFAULT_GAS = 150_000
+# Confirmed too low in practice: a real VerifiableFactory.deployProxy()
+# call (CREATE2 of a new proxy + a delegatecall into its initialize(),
+# which writes several EAC role storage slots) reverted out of gas at
+# 146,998/150,000 -- 98% of the old limit, the textbook out-of-gas
+# signature. build_and_send() is shared by every write this module makes,
+# from a single setText() to a full contract deployment, so the limit has
+# to cover the most expensive one. Raised generously rather than adding a
+# separate eth_estimateGas round trip (and the bigger mock surface that
+# would need in tests): unused gas is refunded on a legacy transaction, so
+# a higher limit costs nothing extra as long as the funded wallet's
+# balance covers gas_limit * gas_price as a worst case -- trivial for a
+# faucet-funded testnet account even at a few gwei.
+DEFAULT_GAS = 900_000
 
 # How long build_and_send() waits for a transaction to actually be mined
 # before giving up, and how often it polls eth_getTransactionReceipt while
