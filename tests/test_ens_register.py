@@ -11,7 +11,6 @@ from ens.register import (
     register_subname,
     verify_isolation,
 )
-from ens.factory import ProxyDeploymentError
 from ens.registry import PermissionedRegistryClient
 from ens.resolver import ResolverPermissionError
 from tests.fake_chain import FakeChain
@@ -96,15 +95,19 @@ def test_ensure_resolver_does_not_redeploy_when_reused_via_override():
     assert again.address.lower() == resolver.address.lower()
 
 
-def test_ensure_resolver_without_override_refuses_to_silently_redeploy():
+def test_ensure_resolver_without_override_self_heals_via_factory_logs():
     """VerifiableFactory's CREATE2 deploy is deterministic per (signer,
-    salt) and reverts on a second attempt (ens/factory.py's module
-    docstring) -- a second ensure_resolver() call with the same admin key
-    and no override must surface that clearly rather than pretending it
-    deployed a second, different resolver."""
+    salt); a second deployProxy() call for the same pair reverts (see
+    ens/factory.py's module docstring) rather than deploying a second,
+    different resolver -- but deploy_proxy() now recovers the *existing*
+    one via its ProxyDeployed event log instead of surfacing that revert,
+    so a second ensure_resolver() call with the same admin key and no
+    override returns the same resolver rather than raising."""
     chain, admin, root_registry, subregistry, resolver = _setup()
-    with pytest.raises(ProxyDeploymentError):
-        ensure_resolver(chain, admin)
+
+    again = ensure_resolver(chain, admin)
+
+    assert again.address.lower() == resolver.address.lower()
 
 
 def test_register_subname_writes_all_records_for_one_agent():

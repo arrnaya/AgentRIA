@@ -130,11 +130,26 @@ def ensure_subregistry(
     reuse it -- required if that deployment already happened, since
     VerifiableFactory's CREATE2 deployment reverts the second time for the
     same (signer, salt) pair. Omit it to deploy fresh.
+
+    A live-attached address that turns out to have no code is treated as
+    NOT attached and gets replaced, loudly -- confirmed necessary in
+    practice: a since-fixed bug in deploy_proxy()'s address prediction
+    (see ens/factory.py's module docstring) had already attached
+    agentria.eth to a codeless address in one run. Trusting "non-zero" as
+    "valid" alone would have made every future run reuse that same broken
+    pointer forever instead of ever correcting it.
     """
     existing = root_registry.get_subregistry(PARENT_LABEL)
     if existing.lower() != ZERO_ADDRESS.lower():
-        logger.info("subregistry: already attached for %s: %s", PARENT_NAME, existing)
-        return PermissionedRegistryClient(rpc=rpc, address=existing)
+        if rpc.get_code(existing) != b"":
+            logger.info("subregistry: already attached for %s: %s", PARENT_NAME, existing)
+            return PermissionedRegistryClient(rpc=rpc, address=existing)
+        logger.warning(
+            "subregistry: %s is attached to %s but has no code on-chain -- "
+            "a previous run attached a broken pointer. Deploying and "
+            "attaching a real one now.",
+            existing, PARENT_NAME,
+        )
 
     if override_address:
         address = override_address

@@ -60,7 +60,7 @@ from ens.constants import (
     ROLE_SET_TEXT,
 )
 from ens.eac import ROOT_RESOURCE, can_grant_roles, has_roles
-from ens.factory import DEPLOY_PROXY_FN
+from ens.factory import DEPLOY_PROXY_FN, PROXY_DEPLOYED_TOPIC
 from ens.registry import (
     FIND_OWNER_FN,
     GET_EXPIRY_FN,
@@ -129,6 +129,10 @@ class FakeChain:
     resolvers: dict[str, _ResolverState] = field(default_factory=dict)
     _nonces: dict[str, int] = field(default_factory=dict)
     _balances: dict[str, int] = field(default_factory=dict)
+    # Real ProxyDeployed-shaped entries {"address", "topics", "data"} --
+    # ens/factory.py's find_deployed_proxy() reads these the same shape a
+    # real eth_getLogs response would return.
+    _factory_logs: list[dict] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         # The root .eth registry always exists.
@@ -160,19 +164,23 @@ class FakeChain:
 
     # --- EthRpc protocol -------------------------------------------------
 
-    def eth_call(self, to: str, data: bytes) -> bytes:
+    def eth_call(self, to: str, data: bytes, from_address: str | None = None) -> bytes:
         to_lower = to.lower()
         selector, payload = data[:4], data[4:]
 
         if to_lower == self.factory_address.lower() and selector == DEPLOY_PROXY_FN.selector:
             implementation, salt, _init_data = self._decode(DEPLOY_PROXY_FN, payload)
-            # Simulate only: predict the address, touch no state. Reverts
-            # (like a real create2-to-existing-code failure) if this
-            # exact (implementation, salt) is already deployed -- the
-            # caller doesn't know *who* msg.sender is under eth_call, so
-            # this fake keys purely on (implementation, salt), which is
-            # sufficient for every test scenario here (one admin key).
-            predicted = _predict_proxy_address(implementation, salt)
+            # Real VerifiableFactory salts on (sender, salt) -- omitting
+            # from_address here defaults to the zero address, exactly
+            # like a real node's eth_call default, so a caller that
+            # forgets to pass it (the actual bug this fake used to hide --
+            # see ens/factory.py's module docstring) predicts a *different*
+            # address than send_raw_transaction's real deployment below,
+            # and test_deploy_proxy_prediction_matches_real_deployment
+            # catches the mismatch instead of both paths quietly agreeing
+            # on a formula neither of them exercises for real.
+            sender = (from_address or ZERO_ADDRESS).lower()
+            predicted = _predict_proxy_address(implementation, salt, sender)
             if predicted.lower() in self.registries or predicted.lower() in self.resolvers:
                 raise ChainRevert(f"FakeChain: {predicted} already deployed (redeploy of same salt)")
             return _encode_result(DEPLOY_PROXY_FN.output_types, predicted)
@@ -210,6 +218,22 @@ class FakeChain:
         ):
             return b"\x60\x80\x60\x40"  # non-empty stand-in bytecode
         return b""
+
+    def get_logs(
+        self, address: str, topics: list[str | None], from_block: str = "earliest"
+    ) -> list[dict]:
+        matches = []
+        for log in self._factory_logs:
+            if log["address"].lower() != address.lower():
+                continue
+            if any(
+                want is not None and log["topics"][i].lower() != want.lower()
+                for i, want in enumerate(topics)
+                if i < len(log["topics"])
+            ):
+                continue
+            matches.append(log)
+        return matches
 
     def send_raw_transaction(self, raw: bytes) -> str:
         sender = Account.recover_transaction(raw)
@@ -249,7 +273,7 @@ class FakeChain:
 
     def _deploy_proxy(self, sender: str, payload: bytes) -> str:
         implementation, salt, init_data = self._decode(DEPLOY_PROXY_FN, payload)
-        predicted = _predict_proxy_address(implementation, salt)
+        predicted = _predict_proxy_address(implementation, salt, sender.lower())
         predicted_lower = predicted.lower()
         if predicted_lower in self.registries or predicted_lower in self.resolvers:
             raise ChainRevert(f"FakeChain: create2 to {predicted} failed, target already has code")
@@ -271,6 +295,23 @@ class FakeChain:
             self._grant(state.roles, ROOT_RESOURCE, role_bitmap, admin)
         else:
             raise ChainRevert(f"FakeChain: unknown implementation {implementation}")
+
+        # Real ProxyDeployed(sender indexed, proxy indexed, salt, impl) --
+        # shape confirmed against a real emitted log on Sepolia (see
+        # ens/factory.py's module docstring), so find_deployed_proxy()
+        # exercises the exact same decode path against this fake as it
+        # would against a real eth_getLogs response.
+        self._factory_logs.append(
+            {
+                "address": self.factory_address,
+                "topics": [
+                    PROXY_DEPLOYED_TOPIC,
+                    "0x" + sender[2:].lower().rjust(64, "0"),
+                    "0x" + predicted[2:].lower().rjust(64, "0"),
+                ],
+                "data": "0x" + salt.to_bytes(32, "big").hex() + implementation[2:].lower().rjust(64, "0"),
+            }
+        )
 
         return "0x" + "55" * 32
 
@@ -403,12 +444,19 @@ def _label_for_id(state: _RegistryState, any_id: int) -> str | None:
     return None
 
 
-def _predict_proxy_address(implementation: str, salt: int) -> str:
-    """Pseudo-CREATE2 address, deterministic given (implementation, salt)
-    -- see module docstring for why this doesn't need to match real
-    VerifiableFactory bytecode math."""
+def _predict_proxy_address(implementation: str, salt: int, sender: str) -> str:
+    """Pseudo-CREATE2 address, deterministic given (sender, implementation,
+    salt) -- see module docstring for why this doesn't need to match real
+    VerifiableFactory bytecode math. `sender` *does* need to actually
+    affect the result, though: the real factory's salt is
+    keccak256(abi.encode(sender, salt)), so two different senders (or a
+    caller that forgets to pass the real one to eth_call, see
+    ens/factory.py's docstring) must predict different addresses here too
+    -- otherwise this fake can't catch that mistake."""
     raw = keccak(
-        bytes.fromhex(implementation[2:].rjust(40, "0")) + salt.to_bytes(32, "big")
+        bytes.fromhex(sender[2:].rjust(40, "0"))
+        + bytes.fromhex(implementation[2:].rjust(40, "0"))
+        + salt.to_bytes(32, "big")
     )
     return to_checksum_address("0x" + raw[-20:].hex())
 

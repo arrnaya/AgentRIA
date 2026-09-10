@@ -83,12 +83,15 @@ class EthRpc(Protocol):
     """The slice of RPC behaviour resolver.py/register.py depend on —
     lets tests substitute a hand-written fake with no network access."""
 
-    def eth_call(self, to: str, data: bytes) -> bytes: ...
+    def eth_call(self, to: str, data: bytes, from_address: str | None = None) -> bytes: ...
     def get_transaction_count(self, address: str) -> int: ...
     def gas_price(self) -> int: ...
     def send_raw_transaction(self, raw: bytes) -> str: ...
     def get_code(self, address: str) -> bytes: ...
     def get_transaction_receipt(self, tx_hash: str) -> dict[str, Any] | None: ...
+    def get_logs(
+        self, address: str, topics: list[str | None], from_block: str = "earliest"
+    ) -> list[dict[str, Any]]: ...
 
 
 class SepoliaRpcClient:
@@ -107,8 +110,11 @@ class SepoliaRpcClient:
             raise RpcError(f"{method} failed: {body['error']}")
         return body["result"]
 
-    def eth_call(self, to: str, data: bytes) -> bytes:
-        result = self._request("eth_call", [{"to": to, "data": _hex(data)}, "latest"])
+    def eth_call(self, to: str, data: bytes, from_address: str | None = None) -> bytes:
+        call = {"to": to, "data": _hex(data)}
+        if from_address is not None:
+            call["from"] = from_address
+        result = self._request("eth_call", [call, "latest"])
         return bytes.fromhex(result[2:])
 
     def get_transaction_count(self, address: str, block: str = "pending") -> int:
@@ -126,6 +132,14 @@ class SepoliaRpcClient:
 
     def get_transaction_receipt(self, tx_hash: str) -> dict[str, Any] | None:
         return self._request("eth_getTransactionReceipt", [tx_hash])
+
+    def get_logs(
+        self, address: str, topics: list[str | None], from_block: str = "earliest"
+    ) -> list[dict[str, Any]]:
+        return self._request(
+            "eth_getLogs",
+            [{"address": address, "topics": topics, "fromBlock": from_block, "toBlock": "latest"}],
+        )
 
     def is_connected(self) -> bool:
         try:
