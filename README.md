@@ -29,9 +29,9 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 | **Current phase** | Architecture finalized (v3) — implementation starting |
 | **Build checklist** | `░░░░░░░░░░░░░░░░░░░░` 0/15 (0%) — verified live where possible, not self-reported |
 | **Time to ETHGlobal deadline** | 3d 12h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`46f599a`](https://github.com/arrnaya/AgentRIA/commit/46f599ab5394fb5944e1a80c21e8ca362f629874) Add runner.py: CLI entrypoint streaming pipeline cycles to the WS feed — ARUN KUMAR YADAV |
-| **Total commits** | 23 |
-| **Last updated** | 2026-09-10 03:49 UTC |
+| **Latest commit** | [`403c78c`](https://github.com/arrnaya/AgentRIA/commit/403c78c34248969e192764c4f251fe323c77a8fc) Wire ORACLE and AUDIT into the pipeline, connecting the two build lanes — Arrnaya |
+| **Total commits** | 34 |
+| **Last updated** | 2026-09-10 03:59 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
