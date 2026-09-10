@@ -2,7 +2,9 @@ import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 
 const REPO = "arrnaya/AgentRIA";
-const SUBMISSION_OPEN = new Date("2026-09-08T00:00:00Z");
+// ETHOnline 2026 runs Sep 4-16; submissions close Sun Sep 13 2026, 12:00pm EDT (16:00 UTC).
+// Source: https://ethglobal.com/events/ethonline2026/info/details
+const SUBMISSION_DEADLINE = new Date("2026-09-13T16:00:00Z");
 const README_PATH = "README.md";
 
 function git(cmd) {
@@ -16,8 +18,8 @@ const author = git("log -1 --pretty=%an");
 const commitCount = git("rev-list --count HEAD");
 
 const now = new Date();
-const msPerDay = 24 * 60 * 60 * 1000;
-const daysSinceOpen = Math.floor((now.getTime() - SUBMISSION_OPEN.getTime()) / msPerDay);
+const msRemaining = SUBMISSION_DEADLINE.getTime() - now.getTime();
+const hoursRemaining = Math.floor(msRemaining / (60 * 60 * 1000));
 
 const readme = readFileSync(README_PATH, "utf8");
 
@@ -32,21 +34,28 @@ const bar = "█".repeat(filled) + "░".repeat(barLength - filled);
 // Phase is driven by actual checklist progress, not the calendar — a date
 // alone can't tell you whether the pipeline has really been built.
 let phase;
-if (done === 0) {
+if (msRemaining <= 0) {
   phase =
-    now.getTime() >= SUBMISSION_OPEN.getTime()
-      ? "Architecture finalized (v3) — implementation not yet started"
-      : "Pre-launch — repo, README & landing/dashboard preview live";
+    done === total
+      ? "Submitted — build complete before deadline"
+      : `Deadline passed — ${done}/${total} milestones verified at close`;
+} else if (done === 0) {
+  phase = "Architecture finalized (v3) — implementation starting";
 } else if (done === total) {
-  phase = "Build complete — submitted to ETHGlobal Online 2026";
+  phase = "Build complete — ready to submit";
 } else {
-  phase = `In progress — ${done}/${total} build milestones complete`;
+  phase = `In progress — ${done}/${total} build milestones verified`;
 }
 
-const windowLabel =
-  daysSinceOpen >= 0
-    ? `Open since Sep 8, 2026 (day ${daysSinceOpen + 1})`
-    : `Opens in ${Math.abs(daysSinceOpen)} day${Math.abs(daysSinceOpen) === 1 ? "" : "s"}`;
+function formatRemaining(hours) {
+  if (hours <= 0) return "Deadline passed";
+  const days = Math.floor(hours / 24);
+  const rem = hours % 24;
+  if (days === 0) return `${rem}h remaining — final push`;
+  return `${days}d ${rem}h remaining`;
+}
+
+const windowLabel = `${formatRemaining(hoursRemaining)} (deadline: Sun Sep 13, 12:00pm EDT)`;
 
 const lastUpdated = now.toISOString().replace("T", " ").slice(0, 16) + " UTC";
 
@@ -54,13 +63,13 @@ const block = `<!-- STATUS:START -->
 | | |
 |---|---|
 | **Current phase** | ${phase} |
-| **Build checklist** | \`${bar}\` ${done}/${total} (${pct}%) |
-| **ETHGlobal submission window** | ${windowLabel} |
+| **Build checklist** | \`${bar}\` ${done}/${total} (${pct}%) — verified live where possible, not self-reported |
+| **Time to ETHGlobal deadline** | ${windowLabel} |
 | **Latest commit** | [\`${shortSha}\`](https://github.com/${REPO}/commit/${fullSha}) ${message} — ${author} |
 | **Total commits** | ${commitCount} |
 | **Last updated** | ${lastUpdated} |
 
-_This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to \`main\`._
+_This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to \`main\`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->`;
 
 const updated = readme.replace(

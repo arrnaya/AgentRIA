@@ -30,6 +30,11 @@ jobs:
         with:
           node-version: 20
 
+      - name: Verify checklist items that can be proven live
+        env:
+          GRAPH_API_KEY: ${{ secrets.GRAPH_API_KEY }}
+        run: node .github/scripts/verify-checklist.mjs
+
       - name: Regenerate status block
         run: node .github/scripts/update-status.mjs
 

@@ -26,14 +26,14 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 <!-- STATUS:START -->
 | | |
 |---|---|
-| **Current phase** | Architecture finalized (v3) — implementation not yet started |
-| **Build checklist** | `░░░░░░░░░░░░░░░░░░░░` 0/15 (0%) |
-| **ETHGlobal submission window** | Open since Sep 8, 2026 (day 2) |
-| **Latest commit** | [`b442d8e`](https://github.com/arrnaya/AgentRIA/commit/b442d8e89245d841942625c4b1971dffb2f202ad) Day 1: RECON agent + Subgraph Studio client (Graph data layer) — Arrnaya |
-| **Total commits** | 12 |
-| **Last updated** | 2026-09-09 23:54 UTC |
+| **Current phase** | Architecture finalized (v3) — implementation starting |
+| **Build checklist** | `░░░░░░░░░░░░░░░░░░░░` 0/15 (0%) — verified live where possible, not self-reported |
+| **Time to ETHGlobal deadline** | 3d 12h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
+| **Latest commit** | [`c13c534`](https://github.com/arrnaya/AgentRIA/commit/c13c534c5cfa117446e090129ad4b9b3256e5962) chore: update live status [skip ci] — github-actions[bot] |
+| **Total commits** | 13 |
+| **Last updated** | 2026-09-10 03:15 UTC |
 
-_This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`._
+_This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
 
 This repo is being built in public and the block above tells the truth about progress — it's
@@ -54,15 +54,16 @@ registration) lands next, checklist item by checklist item.
 6. [x402 Payment Flow — Step by Step](#x402-payment-flow--step-by-step)
 7. [Layer 3 — Identity & Visibility](#layer-3--identity--visibility)
 8. [What's Live in This Repo Right Now](#whats-live-in-this-repo-right-now)
-9. [Repository Structure](#repository-structure-target)
-10. [Tech Stack](#tech-stack)
-11. [Environment Variables](#environment-variables)
-12. [Running Locally](#running-locally)
-13. [Demo Strategy](#demo-strategy)
-14. [Hackathon Qualification Mapping](#hackathon-qualification-mapping)
-15. [Build Timeline](#build-timeline)
-16. [Build Checklist](#build-checklist)
-17. [Why RIA Wins](#why-ria-wins)
+9. [Development Workflow](#development-workflow)
+10. [Repository Structure](#repository-structure-target)
+11. [Tech Stack](#tech-stack)
+12. [Environment Variables](#environment-variables)
+13. [Running Locally](#running-locally)
+14. [Demo Strategy](#demo-strategy)
+15. [Hackathon Qualification Mapping](#hackathon-qualification-mapping)
+16. [Build Timeline](#build-timeline)
+17. [Build Checklist](#build-checklist)
+18. [Why RIA Wins](#why-ria-wins)
 
 ---
 
@@ -313,6 +314,31 @@ interface can be evaluated ahead of the live pipeline going up. Progress from he
 literally, box by box, in the [Build Checklist](#build-checklist) — the [Live Status](#-live-status)
 block above reflects it automatically on every push.
 
+## Development Workflow
+
+RIA is built solo, but developed like a small, disciplined team — fittingly, since the product
+itself is a multi-agent system. Work is split across specialized
+[Claude Code subagents](.claude/agents/) with fixed ownership boundaries, so each change stays
+scoped and reviewable instead of one sprawling context doing everything at once:
+
+| Agent | Owns | Definition |
+|---|---|---|
+| `hedera-payments-engineer` | `mcp_server/`, `hedera/`, the x402 payment flow, ORACLE's wallet, HCS logging, ERC-8004 | [`.claude/agents/hedera-payments-engineer.md`](.claude/agents/hedera-payments-engineer.md) |
+| `langgraph-pipeline-engineer` | `pipeline/`, SCOUT, RISK, EXEC, the StateGraph wiring, the WebSocket feed | [`.claude/agents/langgraph-pipeline-engineer.md`](.claude/agents/langgraph-pipeline-engineer.md) |
+| `ens-identity-engineer` | `ens/`, ENSv2 subname registration, the Permissioned Resolver | [`.claude/agents/ens-identity-engineer.md`](.claude/agents/ens-identity-engineer.md) |
+| `frontend-integrator` | `src/` — landing page, dashboard, wiring the UI to live data as it lands | [`.claude/agents/frontend-integrator.md`](.claude/agents/frontend-integrator.md) |
+| `submission-lead` | ETHGlobal rule compliance, checklist honesty, README status, deadline tracking | [`.claude/agents/submission-lead.md`](.claude/agents/submission-lead.md) |
+
+Two things keep the public status trustworthy rather than self-reported:
+
+- **Live verification, not checkbox honor system.** [`verify-checklist.mjs`](.github/scripts/verify-checklist.mjs)
+  runs on every push and actually queries the live Graph Gateway (using a `GRAPH_API_KEY` GitHub
+  Actions secret — never a local `.env` file) before it will check a box. It only ever moves a box
+  from unchecked to checked; nothing flips back on a transient failure.
+- **Commit hygiene matches ETHGlobal's own rules.** Submissions with large single commits or
+  missing history [can be disqualified](https://ethglobal.com/events/ethonline2026/info/details) —
+  work lands in small, real, incremental commits for exactly that reason, not just as a nicety.
+
 ## Repository Structure (target)
 
 The frontend below is live today at the repo root. Everything else is the planned Python backend,
@@ -519,14 +545,23 @@ works for *any* AI agent, not just RIA, in about 20 seconds and no judge forgets
 
 ## Build Timeline
 
+**Revised for the real deadline.** ETHOnline 2026's submission close is **Sunday, September 13,
+2026, 12:00pm EDT** — confirmed from the [official rules](https://ethglobal.com/events/ethonline2026/info/details),
+not the earlier "opens Sep 8" assumption this proposal started from. The original 6-day plan below
+has been compressed into what's actually achievable in the time left, prioritized by prize weight
+and by what makes the strongest live demo: the Hedera x402/MCP flow (highest prize, most
+differentiated) and a working LangGraph pipeline come before ENS polish.
+
 | Day | Focus | Deliverable |
 |---|---|---|
-| Day 1 | Data Layer | Subgraph Studio client + Substreams connected; RECON pulling live normalized data from Uniswap + Aave |
-| Day 2 | Intelligence Layer | SCOUT + RISK agents wired; LangGraph StateGraph routing confirmed; WebSocket server emitting `SIGNAL` + `TRACE` events |
-| Day 3 | MCP Server + x402 | All 5 MCP tools implemented; Blocky402 middleware wired; ORACLE completing the full x402 payment flow end-to-end |
-| Day 4 | Identity + Audit | ENSv2 subnames registered; HCS topic created + logging; ERC-8004 identities registered on Hedera testnet |
-| Day 5 | Dashboard | All 4 panels live with real WebSocket data; HashScan links working; HCS mirror node poll confirmed |
-| Day 6 | Demo + Submit | SKILL.md + README finalized; 3-minute demo video recorded; ETHGlobal submission completed |
+| Sep 10 (today) | Data + Intelligence Layer | ✅ RECON done and tested. SCOUT + RISK + EXEC wired; LangGraph StateGraph routing confirmed; WebSocket server emitting `SIGNAL` + `TRACE` |
+| Sep 11 | MCP Server + x402 | All 5 MCP tools implemented; Blocky402 middleware wired; ORACLE completing the full x402 payment flow end-to-end; HCS audit logging live |
+| Sep 12 | Identity + Dashboard | ENSv2 subnames registered; dashboard panels wired to real WebSocket data; HashScan + HCS mirror node links confirmed live |
+| Sep 13 (morning, before 12pm EDT) | Demo + Submit | SKILL.md + README finalized; demo video recorded; ETHGlobal submission completed with margin before the deadline, not at it |
+
+If time runs short, cut scope in this order: ENS polish first (bonus track, smallest prize),
+then the number of MCP tools demoed live (one real end-to-end payment beats five half-wired
+ones), never the demo video or the submission itself.
 
 ## Build Checklist
 
