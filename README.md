@@ -28,10 +28,10 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 |---|---|
 | **Current phase** | In progress — 3/15 build milestones verified |
 | **Build checklist** | `████░░░░░░░░░░░░░░░░` 3/15 (20%) — verified live where possible, not self-reported |
-| **Time to ETHGlobal deadline** | 3d 1h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`01bcb05`](https://github.com/arrnaya/AgentRIA/commit/01bcb0538b15982847cad9b06c7219e8d329ff0c) Fix AUDIT's HCS logger sharing ORACLE's key-loading bug, add its live smoke test — Arrnaya |
-| **Total commits** | 85 |
-| **Last updated** | 2026-09-10 14:03 UTC |
+| **Time to ETHGlobal deadline** | 3d 0h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
+| **Latest commit** | [`bdc3fa3`](https://github.com/arrnaya/AgentRIA/commit/bdc3fa387514df9ba13ca5985766d20096180239) Add ERC-8004 Identity Registry + live agent registration for Hedera testnet — Arrnaya |
+| **Total commits** | 87 |
+| **Last updated** | 2026-09-10 15:18 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
