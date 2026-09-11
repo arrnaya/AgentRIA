@@ -22,10 +22,10 @@ log a warning rather than silently no-op:
   runs the live pipeline, with a warning that the mode itself isn't
   distinct yet.
 
-`--mcp-server` is recorded and logged but not consumed by anything in
-this tree today — ORACLE (`hedera-payments-engineer`'s lane) is the agent
-that will use it once `agents/oracle.py` lands; see the stub in
-`pipeline/graph.py`.
+`--mcp-server` sets `MCP_SERVER_URL` for the process (`agents/oracle.py`
+reads it to build ORACLE's `X402Client`) -- defaults to
+`http://127.0.0.1:8000/mcp` if omitted, matching `mcp_server/server.py`'s
+own bind default, so a locally-run MCP server needs no flag at all.
 
 A real run needs `GRAPH_API_KEY` set (RECON fails loud without it, by
 design — see `graph/subgraph_client.py`).
@@ -181,10 +181,12 @@ async def main_loop(args: argparse.Namespace, max_cycles: int | None = None) -> 
         )
 
     if args.mcp_server:
-        logger.info(
-            "--mcp-server=%s recorded; consumed by ORACLE once agents/oracle.py lands",
-            args.mcp_server,
-        )
+        # agents/oracle.py now reads MCP_SERVER_URL (not this flag directly)
+        # to build its X402Client -- wire it through here rather than
+        # leaving `--mcp-server` a documented flag that silently does
+        # nothing, which it was until ORACLE actually landed.
+        os.environ["MCP_SERVER_URL"] = args.mcp_server
+        logger.info("--mcp-server=%s -> MCP_SERVER_URL for ORACLE", args.mcp_server)
 
     ws = RiaWsServer(port=args.ws_port)
     await ws.start()

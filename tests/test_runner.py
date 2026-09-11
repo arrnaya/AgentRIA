@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 
 import httpx
 import respx
@@ -177,3 +178,20 @@ async def test_main_loop_runs_bounded_cycles_and_shuts_down(monkeypatch):
     await main_loop(args, max_cycles=1)
     # If we get here without hanging or raising, the server started and
     # stopped cleanly around exactly one pipeline cycle.
+
+
+@respx.mock
+async def test_main_loop_wires_mcp_server_flag_to_env_var(monkeypatch):
+    """Regression test: `--mcp-server` used to be parsed and logged but
+    never actually consumed -- a real live run needed it to reach ORACLE's
+    X402Client (agents/oracle.py reads MCP_SERVER_URL, not this flag
+    directly), which only surfaced once ORACLE actually ran against a real
+    pipeline and connected to the wrong (default) MCP server URL."""
+    _mock_recon_endpoints()
+    monkeypatch.setenv("GRAPH_API_KEY", API_KEY)
+    monkeypatch.delenv("MCP_SERVER_URL", raising=False)
+
+    args = parse_args(["--ws-port", "0", "--interval", "0", "--mcp-server", "http://example.test/mcp"])
+    await main_loop(args, max_cycles=1)
+
+    assert os.environ["MCP_SERVER_URL"] == "http://example.test/mcp"
