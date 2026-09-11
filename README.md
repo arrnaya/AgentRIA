@@ -307,7 +307,7 @@ intact while giving judges interactive, live proof of every decision and payment
 | SCOUT / RISK / EXEC — LangGraph agents (`agents/scout.py`, `risk.py`, `exec.py`) | ✅ **Live** — ran against real RECON output: SCOUT ranked real signals, RISK correctly gated them against threshold, EXEC correctly held dispatch pending ORACLE enrichment (its actual dispatch path still needs a run with ORACLE's wallet configured too) |
 | `pipeline/graph.py` — full RECON→SCOUT→RISK→ORACLE→EXEC→AUDIT StateGraph | ✅ **Live** — ran end-to-end against real `GRAPH_API_KEY` credentials, multiple real cycles; ORACLE/AUDIT ran but had nothing to do without Hedera credentials in the same process (see ORACLE row below for that half, live separately) |
 | `pipeline/ws_server.py` / `runner.py` — WebSocket feed + CLI entrypoint | ✅ **Live** — ran real multi-cycle loops, WebSocket server bound and serving; a browser client actually consuming that feed is tracked separately below |
-| `mcp_server/` — x402-gated MCP server + 5 priced tools | ✅ **Live on Hedera testnet** — `get_gas_price` confirmed end-to-end against the real Blocky402 facilitator (see below); the other 4 priced tools run the same code path but aren't individually live-confirmed yet |
+| `mcp_server/` — x402-gated MCP server + 5 priced tools | ✅ **Live on Hedera testnet** — `get_gas_price` and `get_risk_score` both confirmed end-to-end, repeatedly, against the real Blocky402 facilitator (see below); `get_sentiment`/`get_price_feed` run the same code path but aren't individually live-confirmed yet; `stream_liquidation_alerts` correctly fails loud (no mocked fallback) since it depends on the Substreams client, which was scoped out — see the Build Timeline |
 | ORACLE — x402 payment client (`hedera/x402_client.py`, `agents/oracle.py`) | ✅ **Live on Hedera testnet** — one real paid `get_gas_price` call, settled, confirmed on the public mirror node (see below) |
 | AUDIT — HCS logging (`hedera/hcs_logger.py`, `agents/audit.py`) | ✅ **Live on Hedera testnet** — one real message logged to topic `0.0.10467384`, confirmed on the public mirror node (see below) |
 | ENSv2 subname registration (`ens/`) | ✅ **Live on Sepolia** — all 4 subnames registered, isolation verified on-chain, independently re-confirmed with a fresh read-only `text()` call (see below) |
@@ -425,7 +425,7 @@ AgentRIA/
 ├── .github/workflows/           # update-status.yml, tests.yml — CI + the Live Status block
 ├── assets/                      # Reference designs & project proposal
 ├── requirements.txt              # ✅ built
-└── SKILL.md                      # 🔜 required for The Graph track
+└── SKILL.md                      # ✅ written — Messari Standardized Subgraphs skill, for The Graph track
 ```
 
 Environment variables (`GRAPH_API_KEY`, `HEDERA_ACCOUNT_ID`, …) are documented in
@@ -563,10 +563,10 @@ works for *any* AI agent, not just RIA, in about 20 seconds and no judge forgets
 | Requirement | How RIA satisfies it |
 |---|---|
 | The Graph is load-bearing | RECON cannot function without Subgraph Studio — it's the sole on-chain data source. Zero mocked data. |
-| Live data | Subgraph Studio API key + Graph Market Substreams — all hitting live mainnet, $0 within free tiers |
+| Live data | Subgraph Studio API key, live against real mainnet Uniswap v3 + Aave v3 deployments, $0 within free tier — confirmed via a real multi-cycle pipeline run, not just a one-off test |
 | Meaningful work with the data | 6-agent reasoning pipeline: detection → scoring → paid enrichment → execution → on-chain audit |
 | AI use case | LangGraph multi-agent pipeline using Graph data for autonomous DeFi intelligence |
-| Composable Graph products | Composes 3 products — Subgraph Studio + Messari Standardized Subgraphs + Substreams — the highest tier |
+| Composable Graph products | Composes 2 products live — Subgraph Studio + Messari Standardized Subgraphs (one query shape, N protocols — see `SKILL.md`). Substreams was scoped out for time, not attempted and left unmocked. |
 | Open source + SKILL.md + README | SKILL.md at repo root, full README, public GitHub repo |
 | From Scratch pool | Net-new build — no prior project-specific code reused |
 
@@ -636,7 +636,7 @@ the boxes below on every push — check one off in a commit and the status block
 - [x] ENSv2 subnames registered with Permissioned Resolver
 - [ ] Dashboard — all 4 panels updating with live data
 - [ ] External agent (Claude Desktop or `curl`) connecting to the MCP server and paying x402
-- [ ] SKILL.md written describing The Graph integration
+- [x] SKILL.md written describing The Graph integration
 - [ ] README complete with architecture, setup, and payment flow
 - [ ] 3-minute demo video following the demo script
 - [ ] ETHGlobal submission with a public repo link
