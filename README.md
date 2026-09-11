@@ -28,10 +28,10 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 |---|---|
 | **Current phase** | In progress — 7/15 build milestones verified |
 | **Build checklist** | `█████████░░░░░░░░░░░` 7/15 (47%) — verified live where possible, not self-reported |
-| **Time to ETHGlobal deadline** | 2d 14h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`66a5d86`](https://github.com/arrnaya/AgentRIA/commit/66a5d86bd5622e1d65dd217f12752b7d87e1aa02) Wire --mcp-server through to ORACLE's MCP_SERVER_URL — Arrnaya |
-| **Total commits** | 105 |
-| **Last updated** | 2026-09-11 01:59 UTC |
+| **Time to ETHGlobal deadline** | 2d 6h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
+| **Latest commit** | [`084b52a`](https://github.com/arrnaya/AgentRIA/commit/084b52a7edd5ac82879965f39946aeeb2d18f3a6) RECON/SCOUT/RISK/EXEC and the pipeline are live -- real multi-cycle run confirmed — Arrnaya |
+| **Total commits** | 107 |
+| **Last updated** | 2026-09-11 09:49 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
