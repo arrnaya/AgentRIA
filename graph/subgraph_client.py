@@ -20,12 +20,20 @@ import httpx
 GATEWAY_BASE_URL = "https://gateway.thegraph.com/api"
 
 # Messari Standardized Subgraph deployment IDs on the decentralized network.
-# Source: The Graph Explorer (thegraph.com/explorer). Pin exact IDs here
-# rather than resolving by name so a query never silently starts hitting an
-# unvetted deployment.
+# Source: Messari's own registry (github.com/messari/subgraphs,
+# deployment/deployment.json, each protocol's
+# services.decentralized-network.query-id) -- cross-checked live against
+# The Graph Explorer for both ids below (2026-09-11): each shows real
+# signal and mainnet Ethereum indexing, confirming they're live, not just
+# present in the registry file. The previous ids here (ELUcwgpm...,
+# HB1Z2EAw...) had gone stale -- a live pipeline run got a real
+# "subgraph not found" from the Gateway for the Uniswap one, which is
+# what prompted re-deriving both from source instead of assuming the
+# other was still good. Pin exact IDs here rather than resolving by name
+# so a query never silently starts hitting an unvetted deployment.
 SUBGRAPH_IDS: dict[str, str] = {
-    "uniswap-v3-ethereum": "ELUcwgpm14LKPLrBRuVvPvNKHQ9HvwmtKgKSH6123cr7",
-    "aave-v3-ethereum": "HB1Z2EAw4rtPRYVb2Nz8QGFLHCpym6ByBX6vbCViuE9F",
+    "uniswap-v3-ethereum": "4cKy6QQMc5tpfdx8yxfYeb9TLZmgLQe44ddW1G7NwkA6",
+    "aave-v3-ethereum": "JCNWRypm7FYwV8fx5HhzZPSFaMxgkPuw4TnR3Gpi81zk",
 }
 
 

@@ -13,9 +13,13 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 const README_PATH = "README.md";
 const GATEWAY = "https://gateway.thegraph.com/api";
+// Kept in sync with graph/subgraph_client.py's SUBGRAPH_IDS -- see that
+// module's comment for how these were re-derived from Messari's own
+// registry after a live pipeline run found the previous ids had gone
+// stale ("subgraph not found" from the Gateway).
 const SUBGRAPHS = {
-  uniswap: "ELUcwgpm14LKPLrBRuVvPvNKHQ9HvwmtKgKSH6123cr7",
-  aave: "HB1Z2EAw4rtPRYVb2Nz8QGFLHCpym6ByBX6vbCViuE9F",
+  uniswap: "4cKy6QQMc5tpfdx8yxfYeb9TLZmgLQe44ddW1G7NwkA6",
+  aave: "JCNWRypm7FYwV8fx5HhzZPSFaMxgkPuw4TnR3Gpi81zk",
 };
 
 async function queryPoolCount(apiKey, subgraphId, field) {
