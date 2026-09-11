@@ -480,12 +480,23 @@ def register_agent(
     )
 
 
-def verify_agent(client: Client, contract_id: ContractId, agent_id: int, *, gas: int = 60_000) -> dict[str, Any]:
+def verify_agent(client: Client, contract_id: ContractId, agent_id: int, *, gas: int = 200_000) -> dict[str, Any]:
     """Read-only, post-registration confirmation: `ownerOf(agentId)` +
     `tokenURI(agentId)` via `ContractCallQuery` -- no wallet/credentials
     needed beyond a client bound to *some* operator to pay the (tiny)
     query fee. Used by the live script to prove registration really
-    landed on-chain, not just that the transaction didn't raise."""
+    landed on-chain, not just that the transaction didn't raise.
+
+    `gas` used to default to 60_000, which a real live run proved
+    insufficient specifically for `tokenURI` -- it returns the full
+    ~450-500 byte agentURI string (build_agent_uri()'s output), and
+    reading + ABI-encoding a string that size for return costs more than
+    a trivial `ownerOf` call. Independently confirmed on that same run
+    that the underlying registration was never in doubt: a raw mirror-node
+    `/contracts/call` query (bypassing this function and its gas budget
+    entirely) decoded `tokenURI(1)` to exactly RECON's expected
+    registration document -- this was only ever a query-gas problem, not
+    a registration problem."""
     owner_result = ContractCallQuery().set_contract_id(contract_id).set_gas(gas).set_function(
         "ownerOf", ContractFunctionParameters().add_uint256(agent_id)
     ).execute(client)
