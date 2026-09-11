@@ -29,9 +29,9 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 | **Current phase** | In progress — 4/15 build milestones verified |
 | **Build checklist** | `█████░░░░░░░░░░░░░░░` 4/15 (27%) — verified live where possible, not self-reported |
 | **Time to ETHGlobal deadline** | 2d 15h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`09b0543`](https://github.com/arrnaya/AgentRIA/commit/09b0543ac9289182b96e882907c523babf0db36c) Fix ERC-8004 register() gas budget -- 300k wasn't enough to store the agentURI — Arrnaya |
-| **Total commits** | 97 |
-| **Last updated** | 2026-09-11 00:43 UTC |
+| **Latest commit** | [`09a7856`](https://github.com/arrnaya/AgentRIA/commit/09a7856dfad2c4ea884b551b7ed3f137f3f8ebfc) Fix verify_agent()'s query gas -- tokenURI's return was too big for 60k — Arrnaya |
+| **Total commits** | 99 |
+| **Last updated** | 2026-09-11 00:54 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
