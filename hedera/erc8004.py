@@ -123,7 +123,16 @@ logger = logging.getLogger("ria.erc8004")
 FIRST_FILE_CHUNK_BYTES = 4000
 
 DEFAULT_CREATE_GAS = 2_000_000
-DEFAULT_EXECUTE_GAS = 300_000
+# register()'s agentURI is a self-contained `data:` URI carrying the whole
+# registration document (build_agent_uri()'s output is ~450-500 bytes for
+# RIA's four agents) -- storing a Solidity string that size means ~15
+# SSTORE operations for _agentURIs[agentId] alone (each up to ~20-22k gas
+# for a first/cold write), which a real live run proved 300_000 gas
+# doesn't cover (INSUFFICIENT_GAS). Bumped with real headroom -- unused
+# gas is refunded on Hedera (confirmed earlier against
+# docs.hedera.com/evm/development/gas-fees), so overshooting costs
+# nothing on a call this cheap.
+DEFAULT_EXECUTE_GAS = 1_000_000
 
 # `transaction_fee` (the max-fee cap the payer is willing to pay -- the
 # actual charged fee, reported separately in the receipt/record, is
