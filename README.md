@@ -328,6 +328,8 @@ intact while giving judges interactive, live proof of every decision and payment
 | Amount | 0.0005 HBAR (50,000 tinybars) |
 | Settlement tx | [`0.0.9185802-1789031699-073655128`](https://hashscan.io/testnet/transaction/0.0.9185802-1789031699-073655128) — `SUCCESS`, confirmed on the [public mirror node](https://testnet.mirrornode.hedera.com/api/v1/transactions/0.0.9185802-1789031699-073655128) |
 
+That was a one-off manual smoke test. Since then, ORACLE has paid **autonomously and repeatedly** through the real `pipeline/runner.py` loop — no script, no human triggering each call. A representative example, independently pulled from the mirror node's own transaction history for the account (not the pipeline's log output): [`0.0.7162784-1789120758-359904050`](https://hashscan.io/testnet/transaction/0.0.7162784-1789120758-359904050), `get_risk_score` (0.002 HBAR), buyer `0.0.10452229` → resource server `0.0.10451954`, facilitator `0.0.7162784` — one of over a dozen consecutive `SUCCESS` transfers of the same shape in that run.
+
 AUDIT's HCS trail is live too — one real message, independently decoded and confirmed against the mirror node (not just the script's own claim):
 
 | Step | Value |
