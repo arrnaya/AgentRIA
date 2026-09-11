@@ -26,12 +26,12 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 <!-- STATUS:START -->
 | | |
 |---|---|
-| **Current phase** | In progress — 5/15 build milestones verified |
-| **Build checklist** | `███████░░░░░░░░░░░░░` 5/15 (33%) — verified live where possible, not self-reported |
-| **Time to ETHGlobal deadline** | 2d 15h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`07dfde3`](https://github.com/arrnaya/AgentRIA/commit/07dfde3df32f26bb0b5ec33d6937cf3a5228bcc8) ERC-8004 agent identity is live on Hedera testnet -- all 4 agents registered — Arrnaya |
-| **Total commits** | 101 |
-| **Last updated** | 2026-09-11 00:55 UTC |
+| **Current phase** | In progress — 7/15 build milestones verified |
+| **Build checklist** | `█████████░░░░░░░░░░░` 7/15 (47%) — verified live where possible, not self-reported |
+| **Time to ETHGlobal deadline** | 2d 14h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
+| **Latest commit** | [`183227e`](https://github.com/arrnaya/AgentRIA/commit/183227e396af48fa46f4bace600b13a195654b6b) Fix stale Messari subgraph deployment IDs -- Gateway returned "not found" — Arrnaya |
+| **Total commits** | 103 |
+| **Last updated** | 2026-09-11 01:47 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
@@ -623,8 +623,8 @@ ones), never the demo video or the submission itself.
 The `Build checklist` line in [Live Status](#-live-status) is computed automatically by counting
 the boxes below on every push — check one off in a commit and the status block updates itself.
 
-- [ ] Subgraph Studio API key live, querying Uniswap + Aave
-- [ ] Messari Standardized Subgraphs queries returning normalized data
+- [x] Subgraph Studio API key live, querying Uniswap + Aave
+- [x] Messari Standardized Subgraphs queries returning normalized data
 - [ ] Substreams pipeline subscribed to ETH mainnet liquidation events
 - [ ] x402-gated MCP server running, all 5 tools responding
 - [x] Blocky402 facilitator registered, x402 middleware intercepting
