@@ -29,9 +29,9 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 | **Current phase** | In progress — 8/15 build milestones verified |
 | **Build checklist** | `███████████░░░░░░░░░` 8/15 (53%) — verified live where possible, not self-reported |
 | **Time to ETHGlobal deadline** | 2d 5h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`3701ebb`](https://github.com/arrnaya/AgentRIA/commit/3701ebb1d690744dad499149759af93674e07399) Add SKILL.md for The Graph track; correct two overstated Substreams claims — Arrnaya |
-| **Total commits** | 112 |
-| **Last updated** | 2026-09-11 10:13 UTC |
+| **Latest commit** | [`9f6b81f`](https://github.com/arrnaya/AgentRIA/commit/9f6b81fecc3dbd09b64948ac5e574c6d1d298e9f) Honor CoinGecko's free tier: cache prices + retry 429s instead of burning payments — Arrnaya |
+| **Total commits** | 114 |
+| **Last updated** | 2026-09-11 10:17 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
