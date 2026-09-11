@@ -302,11 +302,11 @@ intact while giving judges interactive, live proof of every decision and payment
 | Public landing page (`/`) — [ria-agent.vercel.app](https://ria-agent.vercel.app) | ✅ Live |
 | Dashboard interface preview (`/app`) — [ria-agent.vercel.app/app](https://ria-agent.vercel.app/app) | ✅ Live (static preview, illustrative data) |
 | README with self-updating status | ✅ Live (this file) |
-| RECON — Subgraph Studio client + normalization (`graph/`, `agents/recon.py`) | 🟡 Built & unit-tested — needs a live `GRAPH_API_KEY` to run for real |
+| RECON — Subgraph Studio client + normalization (`graph/`, `agents/recon.py`) | ✅ **Live** — real `GRAPH_API_KEY` queries against both corrected subgraph ids, real pool/market counts back each cycle |
 | Substreams (liquidation event stream) | 🔜 Not started |
-| SCOUT / RISK / EXEC — LangGraph agents (`agents/scout.py`, `risk.py`, `exec.py`) | 🟡 Built & unit-tested, no live dependency needed — these run entirely on RECON's output |
-| `pipeline/graph.py` — full RECON→SCOUT→RISK→ORACLE→EXEC→AUDIT StateGraph | 🟡 Built & unit-tested — wired end-to-end, not yet run against live credentials |
-| `pipeline/ws_server.py` / `runner.py` — WebSocket feed + CLI entrypoint | 🟡 Built & unit-tested — not yet run live against the dashboard |
+| SCOUT / RISK / EXEC — LangGraph agents (`agents/scout.py`, `risk.py`, `exec.py`) | ✅ **Live** — ran against real RECON output: SCOUT ranked real signals, RISK correctly gated them against threshold, EXEC correctly held dispatch pending ORACLE enrichment (its actual dispatch path still needs a run with ORACLE's wallet configured too) |
+| `pipeline/graph.py` — full RECON→SCOUT→RISK→ORACLE→EXEC→AUDIT StateGraph | ✅ **Live** — ran end-to-end against real `GRAPH_API_KEY` credentials, multiple real cycles; ORACLE/AUDIT ran but had nothing to do without Hedera credentials in the same process (see ORACLE row below for that half, live separately) |
+| `pipeline/ws_server.py` / `runner.py` — WebSocket feed + CLI entrypoint | ✅ **Live** — ran real multi-cycle loops, WebSocket server bound and serving; a browser client actually consuming that feed is tracked separately below |
 | `mcp_server/` — x402-gated MCP server + 5 priced tools | ✅ **Live on Hedera testnet** — `get_gas_price` confirmed end-to-end against the real Blocky402 facilitator (see below); the other 4 priced tools run the same code path but aren't individually live-confirmed yet |
 | ORACLE — x402 payment client (`hedera/x402_client.py`, `agents/oracle.py`) | ✅ **Live on Hedera testnet** — one real paid `get_gas_price` call, settled, confirmed on the public mirror node (see below) |
 | AUDIT — HCS logging (`hedera/hcs_logger.py`, `agents/audit.py`) | ✅ **Live on Hedera testnet** — one real message logged to topic `0.0.10467384`, confirmed on the public mirror node (see below) |
