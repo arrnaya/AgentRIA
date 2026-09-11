@@ -311,11 +311,11 @@ intact while giving judges interactive, live proof of every decision and payment
 | ORACLE — x402 payment client (`hedera/x402_client.py`, `agents/oracle.py`) | ✅ **Live on Hedera testnet** — one real paid `get_gas_price` call, settled, confirmed on the public mirror node (see below) |
 | AUDIT — HCS logging (`hedera/hcs_logger.py`, `agents/audit.py`) | ✅ **Live on Hedera testnet** — one real message logged to topic `0.0.10467384`, confirmed on the public mirror node (see below) |
 | ENSv2 subname registration (`ens/`) | ✅ **Live on Sepolia** — all 4 subnames registered, isolation verified on-chain, independently re-confirmed with a fresh read-only `text()` call (see below) |
-| ERC-8004 agent identity (`hedera/erc8004.py`) | 🟡 Built & unit-tested — Identity Registry contract + registration script ready, needs a live run (`scripts/register_erc8004_live.py`) to deploy and register for real |
+| ERC-8004 agent identity (`hedera/erc8004.py`) | ✅ **Live on Hedera testnet** — Identity Registry deployed, all 4 agents registered, independently confirmed on the mirror node (see below) |
 | Live WebSocket feed → dashboard | 🟡 Dashboard now wired (`src/hooks/useRiaSocket.ts`) and verified against a real WebSocket connection with synthetic pipeline events — needs `pipeline/runner.py` actually running (with a live `GRAPH_API_KEY`) for the dashboard to show real signals instead of the honest preview fallback |
 | Demo video | 🔜 Before submission |
 
-**208+ tests pass with zero live credentials or network access required** — every module above mocks its external dependency (the Graph Gateway, Blocky402, Hedera SDK submission, Sepolia RPC) rather than skipping the test. What's missing everywhere else is the same thing: real funded accounts and a live run to actually flip a [Build Checklist](#build-checklist) box, which only happens when `verify-checklist.mjs` (or a human, for anything that spends HBAR/ETH) proves it — see [Development Workflow](#development-workflow). ENSv2, the x402 payment flow, and HCS audit logging below have cleared that bar for real.
+**211+ tests pass with zero live credentials or network access required** — every module above mocks its external dependency (the Graph Gateway, Blocky402, Hedera SDK submission, Sepolia RPC) rather than skipping the test. What's missing everywhere else is the same thing: real funded accounts and a live run to actually flip a [Build Checklist](#build-checklist) box, which only happens when `verify-checklist.mjs` (or a human, for anything that spends HBAR/ETH) proves it — see [Development Workflow](#development-workflow). ENSv2, the x402 payment flow, HCS audit logging, and ERC-8004 identity below have cleared that bar for real.
 
 **Live on Hedera testnet right now** — a real, unmocked x402 payment, verifiable by anyone on the public mirror node:
 
@@ -335,6 +335,17 @@ AUDIT's HCS trail is live too — one real message, independently decoded and co
 | Topic | [`0.0.10467384`](https://hashscan.io/testnet/topic/0.0.10467384) |
 | Message | `{"type": "PAYMENT", "tool_name": "get_gas_price", "hbar_amount": 0.0005, ...}` — sequence #1, payer `0.0.10452229` |
 | Verify yourself | [mirror node topic messages](https://testnet.mirrornode.hedera.com/api/v1/topics/0.0.10467384/messages) — base64-decode `message` to see the JSON payload |
+
+ERC-8004 agent identity is live too — a real Identity Registry deployment, all 4 agents registered:
+
+| Agent | Agent id | Register tx |
+|---|---|---|
+| RECON | 1 | [`0.0.10452229@1789087900`](https://hashscan.io/testnet/transaction/0.0.10452229-1789087900-248740196) |
+| ORACLE | 2 | [`0.0.10452229@1789087902`](https://hashscan.io/testnet/transaction/0.0.10452229-1789087902-449367046) |
+| EXEC | 3 | [`0.0.10452229@1789087909`](https://hashscan.io/testnet/transaction/0.0.10452229-1789087909-98556995) |
+| AUDIT | 4 | [`0.0.10452229@1789087915`](https://hashscan.io/testnet/transaction/0.0.10452229-1789087915-806875944) |
+
+Registry: [`0.0.10468445`](https://hashscan.io/testnet/contract/0.0.10468445), EVM address `0x00000000000000000000000000000000009fbc5d` — global agent id format is `eip155:296:<registry evm address>:<agentId>`. Independently verified with a raw, unauthenticated mirror-node `/contracts/call` query against `ownerOf(1)`/`tokenURI(1)` — `ownerOf` matched the registering account's real EVM address, and `tokenURI` decoded to RECON's exact registration document, not just the script's own claim.
 
 **Live on Sepolia right now** — resolve any of these yourself, no trust required:
 
@@ -619,7 +630,7 @@ the boxes below on every push — check one off in a commit and the status block
 - [x] Blocky402 facilitator registered, x402 middleware intercepting
 - [x] ORACLE agent completing the full x402 payment flow end-to-end
 - [x] HCS topic created, AUDIT agent writing entries
-- [ ] ERC-8004 agent identities registered
+- [x] ERC-8004 agent identities registered
 - [x] ENSv2 subnames registered with Permissioned Resolver
 - [ ] Dashboard — all 4 panels updating with live data
 - [ ] External agent (Claude Desktop or `curl`) connecting to the MCP server and paying x402
