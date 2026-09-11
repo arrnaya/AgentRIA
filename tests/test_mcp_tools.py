@@ -13,11 +13,23 @@ import httpx
 import pytest
 import respx
 
+import mcp_server.tools.price_feed as price_feed_module
 from mcp_server.tools.gas_price import ETHERSCAN_API_BASE, GasPriceError, get_gas_price
 from mcp_server.tools.liquidation_stream import LiquidationStreamError, stream_liquidation_alerts
 from mcp_server.tools.price_feed import COINGECKO_API_BASE, PriceFeedError, get_price_feed
 from mcp_server.tools.risk_score import RiskScoreError, get_risk_score
 from mcp_server.tools.sentiment import SentimentError, get_sentiment
+
+
+@pytest.fixture(autouse=True)
+def _clear_price_cache():
+    """get_price_feed caches by coin id at module scope (see its own
+    docstring for why) -- without this, one test's cached price leaks into
+    the next test that queries the same token, silently skipping its mocked
+    HTTP response."""
+    price_feed_module._price_cache.clear()
+    yield
+    price_feed_module._price_cache.clear()
 
 
 # ---------------------------------------------------------------------------
@@ -98,8 +110,97 @@ async def test_price_feed_unknown_token():
 
 @respx.mock
 async def test_price_feed_http_error():
+    respx.get(COINGECKO_API_BASE).mock(return_value=httpx.Response(500, text="server error"))
+    with pytest.raises(PriceFeedError, match="HTTP 500"):
+        await get_price_feed("ETH")
+
+
+@respx.mock
+async def test_price_feed_caches_within_ttl():
+    """Regression coverage for a real live-run problem: get_risk_score calls
+    this on every enrichment, defaulting to ETH, and a real pipeline cycle
+    genuinely exceeded CoinGecko's free tier. A second call for the same
+    token within the TTL must reuse the cached result, not hit the network
+    again."""
+    route = respx.get(COINGECKO_API_BASE).mock(
+        return_value=httpx.Response(200, json={"ethereum": {"usd": 2500.5, "usd_24h_change": -1.2}})
+    )
+
+    first = await get_price_feed("ETH")
+    second = await get_price_feed("eth")  # case-insensitive, same coin id
+
+    assert first == second
+    assert route.call_count == 1
+
+
+@respx.mock
+async def test_price_feed_refetches_after_ttl_expires(monkeypatch):
+    route = respx.get(COINGECKO_API_BASE).mock(
+        return_value=httpx.Response(200, json={"ethereum": {"usd": 2500.5, "usd_24h_change": -1.2}})
+    )
+    await get_price_feed("ETH")
+    assert route.call_count == 1
+
+    # Simulate the TTL having elapsed without a real sleep.
+    monkeypatch.setattr(price_feed_module, "PRICE_CACHE_TTL_SECONDS", -1.0)
+    await get_price_feed("ETH")
+    assert route.call_count == 2
+
+
+@respx.mock
+async def test_price_feed_retries_429_then_succeeds(monkeypatch):
+    """The other half of the same regression: a 429 on a cache miss must not
+    immediately burn the caller's already-settled x402 payment -- it should
+    retry (bounded) before giving up."""
+    sleep_calls = []
+
+    async def _fake_sleep(seconds):
+        sleep_calls.append(seconds)
+
+    monkeypatch.setattr(price_feed_module.asyncio, "sleep", _fake_sleep)
+
+    route = respx.get(COINGECKO_API_BASE)
+    route.side_effect = [
+        httpx.Response(429, text="rate limited"),
+        httpx.Response(200, json={"ethereum": {"usd": 2500.5, "usd_24h_change": -1.2}}),
+    ]
+
+    result = await get_price_feed("ETH")
+
+    assert result["usd"] == 2500.5
+    assert route.call_count == 2
+    assert sleep_calls == [price_feed_module.DEFAULT_RETRY_BACKOFF_SECONDS]
+
+
+@respx.mock
+async def test_price_feed_honors_retry_after_header(monkeypatch):
+    sleep_calls = []
+
+    async def _fake_sleep(seconds):
+        sleep_calls.append(seconds)
+
+    monkeypatch.setattr(price_feed_module.asyncio, "sleep", _fake_sleep)
+
+    route = respx.get(COINGECKO_API_BASE)
+    route.side_effect = [
+        httpx.Response(429, text="rate limited", headers={"retry-after": "3"}),
+        httpx.Response(200, json={"ethereum": {"usd": 2500.5, "usd_24h_change": -1.2}}),
+    ]
+
+    await get_price_feed("ETH")
+
+    assert sleep_calls == [3.0]
+
+
+@respx.mock
+async def test_price_feed_raises_after_exhausting_retries(monkeypatch):
+    async def _fake_sleep(seconds):
+        pass
+
+    monkeypatch.setattr(price_feed_module.asyncio, "sleep", _fake_sleep)
     respx.get(COINGECKO_API_BASE).mock(return_value=httpx.Response(429, text="rate limited"))
-    with pytest.raises(PriceFeedError, match="HTTP 429"):
+
+    with pytest.raises(PriceFeedError, match="rate-limited"):
         await get_price_feed("ETH")
 
 
