@@ -100,6 +100,7 @@ from hiero_sdk_python import (
     FileAppendTransaction,
     FileCreateTransaction,
     FileId,
+    Hbar,
     PrivateKey,
 )
 
@@ -123,6 +124,22 @@ FIRST_FILE_CHUNK_BYTES = 4000
 
 DEFAULT_CREATE_GAS = 2_000_000
 DEFAULT_EXECUTE_GAS = 300_000
+
+# `transaction_fee` (the max-fee cap the payer is willing to pay -- the
+# actual charged fee, reported separately in the receipt/record, is
+# whatever the network's fee schedule computes, refunding the unused
+# portion of the cap; confirmed via docs.hedera.com/learn/core-concepts/
+# fee-model) needs explicit headroom here: hiero_sdk_python's own
+# FileCreateTransaction/FileAppendTransaction default to Hbar(5), which a
+# real live run proved insufficient for a ~4-7 KB file's storage-rent
+# component (INSUFFICIENT_TX_FEE on FileCreate, confirmed via the
+# transaction's own mirror-node record -- not a balance problem, the
+# operator had ~980 HBAR). ContractExecuteTransaction has no override at
+# all (falls back to the base Transaction default of Hbar(2)) -- bumped
+# preemptively here rather than waiting for the same failure mode on
+# register()/setMetadata() calls.
+FILE_TRANSACTION_FEE = Hbar(20)
+EXECUTE_TRANSACTION_FEE = Hbar(5)
 
 # CAIP-2 for Hedera testnet's EVM-compatible chain id, per HIP-30 and
 # confirmed live via web search against chainlist.org/chain/296 and
@@ -276,6 +293,7 @@ def deploy_registry(
             .set_contents(first_chunk)
             .set_file_memo("RIA ERC-8004 Identity Registry bytecode")
         )
+        file_tx.transaction_fee = FILE_TRANSACTION_FEE
         file_tx.freeze_with(client)
         file_tx.sign(private_key)
         file_receipt = file_tx.execute(client, validate_status=True)
@@ -286,6 +304,7 @@ def deploy_registry(
 
         if remainder:
             append_tx = FileAppendTransaction().set_file_id(file_id).set_contents(remainder)
+            append_tx.transaction_fee = FILE_TRANSACTION_FEE
             append_tx.freeze_with(client)
             append_tx.sign(private_key)
             append_tx.execute_all(client)
@@ -393,6 +412,7 @@ def register_agent(
 
         params = ContractFunctionParameters().add_string(resolved_uri)
         tx = ContractExecuteTransaction().set_contract_id(contract_id).set_gas(gas).set_function("register", params)
+        tx.transaction_fee = EXECUTE_TRANSACTION_FEE
         tx.freeze_with(client)
         tx.sign(private_key)
         response = tx.execute(client, wait_for_receipt=False)
@@ -419,6 +439,7 @@ def register_agent(
                 .set_gas(gas)
                 .set_function("setMetadata", meta_params)
             )
+            meta_tx.transaction_fee = EXECUTE_TRANSACTION_FEE
             meta_tx.freeze_with(client)
             meta_tx.sign(private_key)
             meta_response = meta_tx.execute(client, wait_for_receipt=False)

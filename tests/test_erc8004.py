@@ -265,6 +265,24 @@ def test_deploy_registry_real_artifact_needs_append(monkeypatch):
     assert len(artifact["bytecode"]) > erc8004_module.FIRST_FILE_CHUNK_BYTES
 
 
+def test_deploy_registry_sets_explicit_fee_headroom_on_file_transactions(monkeypatch):
+    """Regression test for a real live-run failure: hiero_sdk_python's
+    FileCreateTransaction/FileAppendTransaction default to a Hbar(5) max
+    fee, which a real deploy proved insufficient for this ~4-7KB file's
+    storage-rent component (INSUFFICIENT_TX_FEE, confirmed via the failed
+    transaction's own mirror-node record -- not an account balance
+    problem). Both must carry FILE_TRANSACTION_FEE's explicit headroom."""
+    fake_file_tx, fake_append_tx, _ = _patch_deploy_transactions(monkeypatch)
+    # Force the append path too, so both transactions are exercised.
+    monkeypatch.setattr(erc8004_module, "load_artifact", lambda: {"bytecode": "ab" * 3000})
+    client = MagicMock()
+
+    deploy_registry(client, _FakePrivateKey())
+
+    assert fake_file_tx.transaction_fee == erc8004_module.FILE_TRANSACTION_FEE
+    assert fake_append_tx.transaction_fee == erc8004_module.FILE_TRANSACTION_FEE
+
+
 def test_deploy_registry_raises_when_file_create_receipt_has_no_file_id(monkeypatch):
     fake_file_tx, _, _ = _patch_deploy_transactions(monkeypatch, file_id=None)
     fake_file_tx.execute.return_value = MagicMock(file_id=None)
@@ -388,6 +406,11 @@ def test_register_agent_sets_metadata_for_each_key(monkeypatch):
     assert fake_tx.set_function.call_count == 3
     function_names = [call.args[0] for call in fake_tx.set_function.call_args_list]
     assert function_names == ["register", "setMetadata", "setMetadata"]
+    # Regression coverage for the same fee-headroom fix deploy_registry()
+    # needed: ContractExecuteTransaction has no fee override in
+    # hiero_sdk_python at all (falls back to the base Transaction default
+    # of Hbar(2)), so register()/setMetadata() calls need it set explicitly too.
+    assert fake_tx.transaction_fee == erc8004_module.EXECUTE_TRANSACTION_FEE
 
 
 def test_register_agent_wraps_unexpected_sdk_errors(monkeypatch):
