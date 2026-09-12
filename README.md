@@ -28,10 +28,10 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 |---|---|
 | **Current phase** | In progress — 8/15 build milestones verified |
 | **Build checklist** | `███████████░░░░░░░░░` 8/15 (53%) — verified live where possible, not self-reported |
-| **Time to ETHGlobal deadline** | 1d 8h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`56fc399`](https://github.com/arrnaya/AgentRIA/commit/56fc39977efec5c090aab29c6cf5cd7ffea7f90f) Add demo video script and standalone external-agent x402 demo — Arrnaya |
-| **Total commits** | 118 |
-| **Last updated** | 2026-09-12 07:56 UTC |
+| **Time to ETHGlobal deadline** | 1d 6h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
+| **Latest commit** | [`312935c`](https://github.com/arrnaya/AgentRIA/commit/312935cc63e1c7337ba1157ba23d4a561c033ff1) chore: update live status [skip ci] — github-actions[bot] |
+| **Total commits** | 119 |
+| **Last updated** | 2026-09-12 09:38 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
