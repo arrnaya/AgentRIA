@@ -426,7 +426,8 @@ AgentRIA/
 │   ├── live_smoke_test.py       #     one real x402 payment end-to-end
 │   ├── hcs_smoke_test.py        #     one real HCS topic message end-to-end
 │   ├── register_agents_live.py  #     live ENSv2 subname registration
-│   └── register_erc8004_live.py #     live ERC-8004 registry deploy + agent registration
+│   ├── register_erc8004_live.py #     live ERC-8004 registry deploy + agent registration
+│   └── external_agent_demo.py   #     independent 3rd-party agent paying x402 (the demo's killer moment)
 ├── tests/                       # ✅ 217 tests, all mocked — no live credentials required to run them
 ├── .claude/agents/               # the dev-team subagent briefs — see Development Workflow
 ├── .github/workflows/           # update-status.yml, tests.yml — CI + the Live Status block
@@ -537,6 +538,7 @@ not wired into CI — see each script's own docstring before running):
 
 ```bash
 python scripts/live_smoke_test.py           # one real x402 payment, end-to-end
+python scripts/external_agent_demo.py       # an independent agent (own wallet) paying 4 of the 5 tools
 python scripts/hcs_smoke_test.py            # one real HCS topic message
 python scripts/register_agents_live.py      # ENSv2 subname registration (Sepolia)
 python -m scripts.register_erc8004_live     # ERC-8004 identity registration (Hedera testnet)
@@ -545,7 +547,9 @@ python -m scripts.register_erc8004_live     # ERC-8004 identity registration (He
 ## Demo Strategy
 
 The demo has one job: show that every claim is verifiable on-chain, live. No pre-recorded output,
-no mocked data — every panel updates during the recording.
+no mocked data — every panel updates during the recording. [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) is the
+full word-for-word version of the table below — exact commands, exact narration, a pre-flight
+checklist, and what to do if a segment doesn't cooperate live.
 
 | Time | Action | What a judge sees |
 |---|---|---|
@@ -554,7 +558,7 @@ no mocked data — every panel updates during the recording.
 | 0:50–1:20 | Walk the Agent Trace panel | RECON → SCOUT → RISK progression, confidence scores, routing decision |
 | 1:20–2:00 | ORACLE fires an x402 MCP call | MCP server log shows the call → 402 → payment → execution; Payment Monitor shows the HBAR amount + a live HashScan link |
 | 2:00–2:20 | EXEC dispatches, AUDIT logs | Agent Trace shows the final routing; an HCS Audit Trail entry appears — click the mirror node link live |
-| **2:20–2:40** | **The killer moment — a second agent connects** | A `curl` or Claude Desktop session connects to the MCP server cold, gets a 402, pays HBAR, and receives data back — proof this is a generalized commercial primitive, not a RIA-only trick |
+| **2:20–2:40** | **The killer moment — a second agent connects** | `scripts/external_agent_demo.py` — a standalone script with its own wallet, never touching RIA's pipeline — connects to the MCP server cold, gets a 402, pays HBAR, and receives data back for 4 of the 5 tools — proof this is a generalized commercial primitive, not a RIA-only trick |
 | 2:40–3:00 | Show ENS identity | ENS app on Sepolia resolves `oracle.agentria.eth` with live ENSIP-26 metadata |
 
 The 2:20–2:40 moment is the single most memorable thing to show a judge: it proves the MCP server
