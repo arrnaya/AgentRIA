@@ -38,9 +38,11 @@ _This block is regenerated automatically by [.github/workflows/update-status.yml
 
 This repo is being built in public and the block above tells the truth about progress — it's
 computed from the checked boxes in the [Build Checklist](#build-checklist), not from a calendar.
-Right now that's the project proposal, this README, and a live preview of the landing page and
-dashboard interface. The Python agent pipeline (RECON, the MCP server, ORACLE's x402 flow, ENSv2
-registration) lands next, checklist item by checklist item.
+The full Python backend is live: RECON pulling real Graph data, ORACLE paying real HBAR via x402
+(repeatedly, autonomously), HCS audit logging, ERC-8004 identity, and ENSv2 identity are all
+confirmed on-chain — see [What's Live](#whats-live-in-this-repo-right-now) for the receipts. What's
+left is Substreams (explicitly scoped out, see [Build Timeline](#build-timeline)), a fully-connected
+dashboard demo, and the submission itself.
 
 ---
 
@@ -139,8 +141,10 @@ is the first consumer and the proof of concept; the MCP server is the product.
 | `stream_liquidation_alerts(protocol, threshold)` | Pre-filtered liquidation-proximity alerts | Substreams, processed and normalized | 0.001 HBAR / alert |
 
 The raw Substreams data behind `stream_liquidation_alerts` is free from The Graph — what the MCP
-server sells is the filtered, normalized, agent-ready stream on top of it. That's a defensible
-commercial model, not a resale of public data.
+server sells would be the filtered, normalized, agent-ready stream on top of it. That's a defensible
+commercial model, not a resale of public data — but Substreams itself was scoped out for time (see
+[Build Timeline](#build-timeline)), so this specific tool correctly fails loud rather than faking
+alert data; the other four tools are unaffected.
 
 ### Why MCP over a plain gated endpoint
 
@@ -171,10 +175,10 @@ commercial model, not a resale of public data.
 │  100k q/month    │    ↓                 │  stream_alerts()    0.001  HBAR  │
 │                  │  RISK                │  (per alert)                     │
 │  Substreams      │    ↓                 │                                  │
-│  (streaming)     │  ORACLE──────────────┼──► pays x402, calls MCP tools   │
-│  Free tier:      │    ↓ (enriched)      │                                  │
-│  7M blocks       │  EXEC                │  Hedera Testnet                  │
-│  + 5 GiB egress  │    ↓                 │  ─────────────────────────       │
+│  scoped out for  │  ORACLE──────────────┼──► pays x402, calls MCP tools   │
+│  time -- not     │    ↓ (enriched)      │                                  │
+│  attempted, not  │  EXEC                │  Hedera Testnet                  │
+│  mocked          │    ↓                 │  ─────────────────────────       │
 │                  │  AUDIT               │  x402 payments (Blocky402)       │
 │  Direct queries  │    ↓                 │  HCS audit trail                 │
 │  by RECON agent  │  WebSocket ──────────┼──► Dashboard feed                │
@@ -198,24 +202,23 @@ foundation RIA is built on. **The Graph data never routes through the x402 MCP s
 free, public, and open, and gating it behind payments would be architecturally wrong and
 philosophically backwards.
 
-Three Graph products are composed:
+Two Graph products are composed live today; a third was scoped out for time (not attempted, not
+mocked — see [Build Timeline](#build-timeline)):
 
-| Product | How RECON uses it | Query pattern | Free tier used |
+| Product | How RECON uses it | Query pattern | Status |
 |---|---|---|---|
-| Subgraph Studio | GraphQL queries for pool TVL, APY, utilization, collateral ratios | 2 queries/min across 3 protocols | ~17k of 100k/month free |
-| Messari Standardized Subgraphs | One schema spans Uniswap, Aave, Compound, Curve simultaneously | 1 query → 4 protocols normalized | Included in Studio queries |
-| Substreams (Graph Market) | Block-by-block liquidation-proximity event stream | Subscribe, receive pushed events | ~300k of 7M blocks free |
+| Subgraph Studio | GraphQL queries for pool TVL, volume, rates against real mainnet Uniswap v3 + Aave v3 | 2 queries/cycle, both protocols | ✅ Live — real queries every pipeline cycle |
+| Messari Standardized Subgraphs | One schema spans Uniswap, Aave, Compound, Curve simultaneously | 1 query shape → N protocols (see `SKILL.md`) | ✅ Live — same query shape against both live deployments |
+| Substreams (Graph Market) | Block-by-block liquidation-proximity event stream | Subscribe, receive pushed events | 🔜 Scoped out — `stream_liquidation_alerts` fails loud rather than faking data |
 
-### Confirmed free-tier math for the build window
+### Confirmed free-tier usage
 
-| Product | Free tier | RIA usage (6-day build) | Cost |
-|---|---|---|---|
-| Subgraph Studio | 100,000 queries/month | ~17,280 queries (2/min × 60 × 24 × 6) | $0 — ~17% of free tier |
-| Substreams (Graph Market) | 7M blocks + 5 GiB egress, no credit card | ~300,000 blocks (50k/day × 6 days) | $0 — ~4% of free tier |
-| After the hackathon, at scale | $2 / 100k queries; $25/TB Substreams | Production scale | Very manageable unit economics |
+| Product | Free tier | Cost |
+|---|---|---|
+| Subgraph Studio | 100,000 queries/month | $0 — real usage this build is a small fraction of that |
+| After the hackathon, at scale | $2 / 100k queries | Very manageable unit economics |
 
-**RIA operates entirely within free tiers for the whole build window — no GRT, no credit card, no
-billing setup required.**
+**RIA operates entirely within free tiers — no GRT, no credit card, no billing setup required.**
 
 ## Layer 2 — LangGraph Intelligence Pipeline
 
@@ -224,7 +227,7 @@ carries portfolio context, risk thresholds, and HBAR payment budget across every
 
 | Agent | Role | Data source | Output |
 |---|---|---|---|
-| **RECON** | Ingest + normalize on-chain data | The Graph (Subgraph Studio + Substreams) — free | Normalized opportunity signals |
+| **RECON** | Ingest + normalize on-chain data | The Graph Subgraph Studio — free | Normalized opportunity signals |
 | **SCOUT** | Rank opportunities by raw potential | RECON output | Ranked opportunity list with scores |
 | **RISK** | Score and size positions | SCOUT output + portfolio state | Risk-adjusted recommendations |
 | **ORACLE** | Enrich signals — pays the x402 MCP server | x402 MCP server tools (paid in HBAR) | Enriched signals with confidence delta |
@@ -403,24 +406,28 @@ AgentRIA/
 │   │   ├── app/page.tsx       # Dashboard      →  ria-agent.vercel.app/app
 │   │   ├── layout.tsx
 │   │   └── globals.css
-│   └── components/            # Shared UI (Nav, Footer, Brand, Card, Pill…)
+│   ├── components/             # Shared UI (Nav, Footer, Brand, Card, Pill…)
+│   └── hooks/useRiaSocket.ts   # ✅ built — typed WebSocket client for the live pipeline feed
 ├── agents/                      # ✅ all six built — recon · scout · risk · oracle · exec · audit
 ├── graph/
 │   ├── subgraph_client.py      # ✅ built — Graph Gateway async client
 │   ├── queries/messari.py      # ✅ built — DEX + lending query templates
-│   └── substreams_client.py    # 🔜
+│   └── substreams_client.py    # 🔜 scoped out for time, not attempted
 ├── mcp_server/                  # ✅ built — x402-gated MCP server (NEW in v3)
-│   ├── server.py                #     FastMCP server (HTTP/SSE mode)
+│   ├── server.py                #     FastMCP server (streamable-http mode)
 │   ├── x402_middleware.py       #     Blocky402 payment verification middleware
 │   ├── tools/                   #     gas_price · sentiment · risk_score · price_feed · liquidation_stream
 │   └── pricing.py               #     per-tool HBAR price config
-├── hedera/                      # ✅ built — x402_client.py · hcs_logger.py · wallet.py
+├── hedera/                      # ✅ built — wallet.py · x402_client.py · hcs_logger.py · key_loader.py · erc8004.py
+│   └── contracts/               #     RIAIdentityRegistry.sol + compiled artifact (ERC-8004)
 ├── ens/                         # ✅ built — register.py · resolver.py · accounts.py · rpc.py
 ├── pipeline/                    # ✅ built — state.py · graph.py · runner.py · ws_server.py
 ├── scripts/                     # ✅ built — one-off live scripts (never wired into CI):
 │   ├── live_smoke_test.py       #     one real x402 payment end-to-end
-│   └── register_agents_live.py  #     live ENSv2 subname registration
-├── tests/                       # ✅ 151 tests, all mocked — no live credentials required to run them
+│   ├── hcs_smoke_test.py        #     one real HCS topic message end-to-end
+│   ├── register_agents_live.py  #     live ENSv2 subname registration
+│   └── register_erc8004_live.py #     live ERC-8004 registry deploy + agent registration
+├── tests/                       # ✅ 217 tests, all mocked — no live credentials required to run them
 ├── .claude/agents/               # the dev-team subagent briefs — see Development Workflow
 ├── .github/workflows/           # update-status.yml, tests.yml — CI + the Live Status block
 ├── assets/                      # Reference designs & project proposal
@@ -440,23 +447,23 @@ Environment variables (`GRAPH_API_KEY`, `HEDERA_ACCOUNT_ID`, …) are documented
 | LLM | Claude Sonnet via Anthropic API | Tool-calling across all 6 agents + LLM inference inside MCP tools |
 | Data — Subgraph | The Graph Subgraph Studio | 100k free queries/month; ~17k used across the build window — $0 |
 | Data — Schema | Messari Standardized Subgraphs | Single GraphQL schema spanning Uniswap, Aave, Compound, Curve |
-| Data — Streams | The Graph Market (Substreams) | 7M blocks + 5 GiB free; ~300k blocks used — $0 |
-| MCP server | Python MCP SDK (HTTP/SSE mode) | Standalone server — any MCP agent can connect |
+| Data — Streams | The Graph Market (Substreams) | 🔜 Scoped out for time — not attempted, not mocked |
+| MCP server | Python MCP SDK (streamable-http mode) | Standalone server — any MCP agent can connect |
 | x402 payments | Hedera x402 + Blocky402 | Per-tool HBAR micropayments, sub-3s finality on testnet |
-| Payment-side enrichment APIs | Etherscan (free) + CoinGecko (free) + Claude API | What the MCP tools call internally once payment is confirmed |
+| Payment-side enrichment APIs | Etherscan (free) + CoinGecko (free, TTL-cached) + Claude API | What the MCP tools call internally once payment is confirmed |
 | Audit trail | Hedera Consensus Service (HCS) | Tamper-proof, block-timestamped action log |
 | Agent identity (Hedera) | ERC-8004 | On-chain agent identity standard on Hedera testnet |
 | Agent identity (ENS) | ENSv2 on Sepolia | Permissioned Resolver + Enhanced Access Control per agent |
 | Frontend | Next.js 16 + TypeScript + Tailwind CSS v4 | This repo — landing + dashboard, deployed on Vercel |
-| Dashboard feed | Python `websockets` + React hooks | 🔜 Typed events: `SIGNAL`, `TRACE`, `PAYMENT`, `AUDIT` |
-| Testing | pytest + Hardhat fork | 🔜 Local fork for execution simulation; MCP tool unit tests |
+| Dashboard feed | Python `websockets` + React hooks | ✅ Live — `useRiaSocket.ts`, typed `SIGNAL`/`TRACE`/`PAYMENT`/`AUDIT` events |
+| Testing | pytest | ✅ 217 tests, fully mocked — no live credentials needed to run them |
 
 ## Environment Variables
 
 | Variable | Where to get it | Cost |
 |---|---|---|
 | `GRAPH_API_KEY` | Subgraph Studio → API Keys tab | Free (100k queries/month) |
-| `GRAPH_MARKET_TOKEN` | thegraph.market → account → token | Free (7M blocks + 5 GiB) |
+| `GRAPH_MARKET_TOKEN` | thegraph.market → account → token — not currently used; Substreams was scoped out (see [Build Timeline](#build-timeline)) | Free (7M blocks + 5 GiB) |
 | `HEDERA_ACCOUNT_ID` | Hedera Testnet Portal | Free testnet |
 | `HEDERA_PRIVATE_KEY` | Hedera Testnet Portal | Free testnet |
 | `ANTHROPIC_API_KEY` | console.anthropic.com | Pay per token — minimal for a hackathon build |
@@ -469,6 +476,7 @@ Environment variables (`GRAPH_API_KEY`, `HEDERA_ACCOUNT_ID`, …) are documented
 | `SEPOLIA_RPC_URL` | Infura / Alchemy / a public Sepolia gateway | Free tier |
 | `RIA_SUBREGISTRY_ADDRESS` *(optional)* | agentria.eth's own ENSv2 subregistry (holds recon/oracle/exec/audit as child labels) — printed by `scripts/register_agents_live.py` after its first run | Deploys a fresh one via ENSv2's VerifiableFactory if unset |
 | `RIA_RESOLVER_ADDRESS` *(optional)* | The shared ENSv2 Permissioned Resolver proxy RIA's four subnames resolve through — printed by `scripts/register_agents_live.py` after its first run | Deploys a fresh one via ENSv2's VerifiableFactory if unset |
+| `ERC8004_REGISTRY_CONTRACT_ID` *(optional)* | RIA's ERC-8004 Identity Registry contract id — printed by `scripts/register_erc8004_live.py` after its first run | Deploys a fresh registry via the Hedera File + Smart Contract Service if unset |
 
 ## Running Locally
 
@@ -479,62 +487,59 @@ so any AI coding agent working in this repo can query Hedera's docs directly. Op
 `/plugin marketplace add hedera-dev/hedera-skills` in Claude Code — for the Agent Kit and
 submission-validator skills.
 
-The frontend in this repo runs standalone today:
+Both halves of RIA are built and run live today — this is the actual, current command set (not
+aspirational), matching what this build has been run with:
 
 ```bash
 git clone https://github.com/arrnaya/AgentRIA.git
 cd AgentRIA
+
+# Frontend
 npm install
-npm run dev
-# → http://localhost:3000        (landing)
-# → http://localhost:3000/app    (dashboard preview)
-```
 
-The Python backend is landing incrementally (see [What's Live](#whats-live-in-this-repo-right-now)).
-What exists today — RECON's Subgraph Studio client — runs and tests like this:
-
-```bash
+# Backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-
-# Run the test suite (mocked Graph Gateway responses — no API key needed)
-pytest
-
-# Run RECON for real (needs a free key from https://thegraph.com/studio/)
-export GRAPH_API_KEY=your_key_here
-python -c "
-import asyncio
-from agents.recon import run_recon
-from pipeline.state import RiaState
-
-async def main():
-    state = await run_recon(RiaState())
-    for s in state.signals:
-        print(s['protocol'], s['pair'], s['type'], s['raw_metrics'])
-
-asyncio.run(main())
-"
+pytest   # 217 tests, fully mocked — no credentials needed
 ```
 
-Once the rest of the backend lands, the full stack starts in four terminals:
+Three terminals for the full live stack (a fourth if you also want the frontend dev server open
+locally instead of just visiting the deployed site):
 
 ```bash
-# Terminal 1 — x402-gated MCP server
-cd mcp_server
-python server.py --host 0.0.0.0 --port 8080 --facilitator blocky402 --network testnet
+# Terminal 1 — x402-gated MCP server (streamable-http mode; ORACLE's client needs the
+# session-handshake support that mode provides, not the sse default)
+export HEDERA_ACCOUNT_ID=0.0.xxxxx        # this server's payTo account — must differ from
+                                            # Terminal 2's ORACLE wallet, or every payment
+                                            # nets to zero (a native transfer to yourself)
+export BLOCKY402_FACILITATOR_URL=https://api.testnet.blocky402.com
+export ETHERSCAN_API_KEY=...
+export ANTHROPIC_API_KEY=...
+export MCP_TRANSPORT=streamable-http
+python -m mcp_server.server
+# → binds 127.0.0.1:8000 by default (MCP_HOST/MCP_PORT to change)
 
 # Terminal 2 — RIA agent pipeline + WebSocket server
-python pipeline/runner.py \
-  --mode live --networks ethereum,arbitrum,polygon \
-  --risk-threshold 0.65 --budget-hbar 10 --interval 30 --ws-port 3001 \
-  --mcp-server http://localhost:8080
+export GRAPH_API_KEY=...
+export HEDERA_ACCOUNT_ID=0.0.yyyyy         # ORACLE's own wallet — different account than Terminal 1
+export HEDERA_PRIVATE_KEY=...
+python pipeline/runner.py --mode live --risk-threshold 0.65 --budget-hbar 10 --interval 30 --ws-port 3002
+# --mcp-server <url> overrides Terminal 1's address if it isn't the 127.0.0.1:8000 default
 
-# Terminal 3 — Next.js dashboard
+# Terminal 3 — Next.js dashboard, pointed at Terminal 2's WebSocket port
+export NEXT_PUBLIC_RIA_WS_URL=ws://localhost:3002
 npm run dev
-# → http://localhost:3000
+# → http://localhost:3000/app — watch for "Pipeline: Connected" and each panel's LIVE badge
+```
 
-# Terminal 4 — watch the HCS audit trail live (optional)
-python hedera/hcs_logger.py --follow --topic <TOPIC_ID>
+Optional one-time live setup scripts (each spends real, free testnet HBAR/ETH and is deliberately
+not wired into CI — see each script's own docstring before running):
+
+```bash
+python scripts/live_smoke_test.py           # one real x402 payment, end-to-end
+python scripts/hcs_smoke_test.py            # one real HCS topic message
+python scripts/register_agents_live.py      # ENSv2 subname registration (Sepolia)
+python -m scripts.register_erc8004_live     # ERC-8004 identity registration (Hedera testnet)
 ```
 
 ## Demo Strategy
@@ -645,8 +650,8 @@ the boxes below on every push — check one off in a commit and the status block
 
 | Judging criterion | RIA v3's edge |
 |---|---|
-| Technical depth | 6-agent LangGraph pipeline + MCP server + x402 middleware + Substreams + HCS + ENSv2 — not a chatbot wrapper |
-| Graph product composition | 3 Graph products composed (Studio + Standardized Subgraphs + Substreams) — the highest qualification tier |
+| Technical depth | 6-agent LangGraph pipeline + MCP server + x402 middleware + HCS + ERC-8004 + ENSv2 — not a chatbot wrapper |
+| Graph product composition | 2 Graph products composed live (Studio + Standardized Subgraphs, one query shape spanning N protocols — see `SKILL.md`); Substreams scoped out for time, not claimed |
 | Live data integrity | Zero mocked data; every Graph query hits live mainnet within free tier, verifiable in the demo |
 | Hedera x402 completeness | Hosts the gated MCP server **and** consumes it — a full loop. A second external agent connecting proves generalization. |
 | Commercial model clarity | The x402-gated MCP server is a first-mover demonstration of how AI agents should pay for services |
