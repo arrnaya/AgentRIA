@@ -28,10 +28,10 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 |---|---|
 | **Current phase** | In progress — 8/15 build milestones verified |
 | **Build checklist** | `███████████░░░░░░░░░` 8/15 (53%) — verified live where possible, not self-reported |
-| **Time to ETHGlobal deadline** | 2d 5h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`9f6b81f`](https://github.com/arrnaya/AgentRIA/commit/9f6b81fecc3dbd09b64948ac5e574c6d1d298e9f) Honor CoinGecko's free tier: cache prices + retry 429s instead of burning payments — Arrnaya |
-| **Total commits** | 114 |
-| **Last updated** | 2026-09-11 10:17 UTC |
+| **Time to ETHGlobal deadline** | 1d 8h remaining (deadline: Sun Sep 13, 12:00pm EDT) |
+| **Latest commit** | [`b280011`](https://github.com/arrnaya/AgentRIA/commit/b2800110a4522ce7600dbb96b2d43e6dda25554b) Final README accuracy pass -- remove fabricated Substreams numbers, fix Running Locally — Arrnaya |
+| **Total commits** | 116 |
+| **Last updated** | 2026-09-12 07:53 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
