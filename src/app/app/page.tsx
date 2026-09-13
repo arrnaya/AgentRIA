@@ -5,15 +5,6 @@ import { Logomark, Wordmark } from "@/components/Brand";
 import { Card, Pill } from "@/components/ui";
 import { useRiaSocket, type SignalEvent } from "@/hooks/useRiaSocket";
 
-const tabs = [
-  { href: "#overview", label: "Overview" },
-  { href: "#opportunities", label: "Opportunities" },
-  { href: "#trace", label: "Agent Trace" },
-  { href: "#payments", label: "Payments" },
-  { href: "#audit", label: "Audit Trail" },
-  { href: "#identity", label: "Identity" },
-];
-
 // Static illustrative data — shown only when the panel hasn't received a
 // real event of its type yet (see `useRiaSocket`'s `live` flags below).
 // Once a panel goes live, its real feed replaces this entirely.
@@ -161,13 +152,12 @@ export default function Dashboard() {
         {/* PREVIEW BANNER */}
         <div className="flex flex-col gap-1 rounded-2xl border border-butter-deep/40 bg-butter px-5 py-4 text-sm text-[#6b4f10] shadow-[0_12px_30px_-18px_rgba(23,21,34,0.35)] sm:flex-row sm:items-center sm:justify-between">
           <p>
-            <span className="font-medium">Partially live.</span> Agent Identity is real, on-chain,
-            and verified. Opportunities, Agent Trace, Payment Monitor, and HCS Audit Trail each
-            connect to RIA&rsquo;s WebSocket pipeline (
-            <code className="rounded bg-black/5 px-1 py-0.5 text-[11px]">pipeline/runner.py --ws-port 3001</code>
-            ) and switch from illustrative preview data to real events the moment that panel
-            receives its first one — watch for the <span className="font-medium">LIVE</span> badge
-            on each panel below.{" "}
+            <span className="font-medium">{liveCount === 4 ? "Fully live." : liveCount > 0 ? "Partially live." : "Preview mode."}</span>{" "}
+            Agent Identity is real, on-chain, and verified. Opportunities, Agent Trace, Payment
+            Monitor, and HCS Audit Trail each connect to RIA&rsquo;s live WebSocket pipeline and
+            switch from illustrative preview data to real events the moment that panel receives
+            its first one — watch for the <span className="font-medium">LIVE</span> badge on each
+            panel below.{" "}
             {liveCount > 0 ? (
               <span className="font-medium">{liveCount} of 4 event-driven panels are live right now.</span>
             ) : (
@@ -178,21 +168,6 @@ export default function Dashboard() {
             Follow build progress →
           </a>
         </div>
-
-        {/* TABS */}
-        <nav className="mt-6 flex gap-1 overflow-x-auto rounded-full border border-line bg-white p-1 text-sm scrollbar-thin">
-          {tabs.map((t, i) => (
-            <a
-              key={t.href}
-              href={t.href}
-              className={`shrink-0 rounded-full px-4 py-2 transition ${
-                i === 0 ? "bg-noir text-paper" : "text-ink-soft hover:bg-lavender/50"
-              }`}
-            >
-              {t.label}
-            </a>
-          ))}
-        </nav>
 
         {/* OVERVIEW STAT ROW */}
         <section id="overview" className="mt-6 scroll-mt-24 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -249,7 +224,7 @@ export default function Dashboard() {
                 <span className="text-xs text-ink-faint">SCOUT</span>
               </div>
             </div>
-            <div className="mt-3 divide-y divide-line">
+            <div className="mt-3 max-h-[420px] divide-y divide-line overflow-y-auto">
               {displayOpportunities.map((o, i) => (
                 <div key={live.signals ? `${o.protocol}-${o.type}-${i}` : o.protocol + o.type} className="px-6 py-4">
                   <div className="flex items-center justify-between">
@@ -286,13 +261,10 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
-            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-              <button className="flex-1 rounded-full border border-line px-4 py-2.5 text-sm font-medium text-ink transition hover:bg-lavender/40">
-                View Full Trace
-              </button>
+            <div className="mt-5">
               <button
                 disabled
-                className="flex-1 cursor-not-allowed rounded-full bg-ink/10 px-4 py-2.5 text-sm font-medium text-ink-faint"
+                className="w-full cursor-not-allowed rounded-full bg-ink/10 px-4 py-2.5 text-sm font-medium text-ink-faint"
                 title="Read-only preview — this dashboard never executes"
               >
                 Execute (read-only)
@@ -359,7 +331,7 @@ export default function Dashboard() {
                 <p className="text-sm font-medium text-ink">HCS Audit Trail</p>
                 <LiveBadge live={live.audits} />
               </div>
-              <div className="mt-4 space-y-3 text-xs">
+              <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto text-xs">
                 {live.audits && latestAudits.length > 0 ? (
                   latestAudits.map((a, i) => (
                     <div key={`${a.action}-${a.logged_at}-${i}`} className="rounded-xl bg-paper px-4 py-3">
