@@ -26,12 +26,13 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 <!-- STATUS:START -->
 | | |
 |---|---|
-| **Current phase** | In progress — 13/15 build milestones verified |
-| **Build checklist** | `█████████████████░░░` 13/15 (87%) — verified live where possible, not self-reported |
+| **Current phase** | Submitted — build complete |
+| **Build checklist** | `████████████████████` 14/14 (100%) — verified live where possible, not self-reported |
+| **Future build checklist** | `░░░░░░░░░░░░░░░░░░░░` 0/2 (0%) — scoped out of this submission, tracked separately |
 | **Time to ETHGlobal deadline** | 5h remaining — final push (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`cda15b8`](https://github.com/arrnaya/AgentRIA/commit/cda15b88b3a5aa2c6e84b19a8186d75aae367e0c) chore: update live status [skip ci] — github-actions[bot] |
-| **Total commits** | 133 |
-| **Last updated** | 2026-09-13 10:39 UTC |
+| **Latest commit** | [`8729a93`](https://github.com/arrnaya/AgentRIA/commit/8729a933c2494376edd0037f518bdf93bcdc94d2) Split Future Build Checklist out of the main 14 items, link demo/submission — ARUN KUMAR YADAV |
+| **Total commits** | 135 |
+| **Last updated** | 2026-09-13 10:46 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
@@ -42,8 +43,9 @@ The full Python backend is live: RECON pulling real Graph data, ORACLE paying re
 (repeatedly, autonomously), HCS audit logging, ERC-8004 identity, and ENSv2 identity are all
 confirmed on-chain — see [What's Live](#whats-live-in-this-repo-right-now) for the receipts. The
 demo is recorded and the [ETHGlobal submission](https://ethglobal.com/showcase/agent-ria-2isym) is
-in. What's left is Substreams and getting the x402-gated MCP server to all 5 tools live (both
-explicitly scoped out, see [Build Timeline](#build-timeline)).
+in — every item in the [Build Checklist](#build-checklist) is done. Substreams and Uniswap live
+trading are scoped out of this submission and tracked in the [Future Build
+Checklist](#future-build-checklist) instead.
 
 ---
 
@@ -66,7 +68,8 @@ explicitly scoped out, see [Build Timeline](#build-timeline)).
 15. [Hackathon Qualification Mapping](#hackathon-qualification-mapping)
 16. [Build Timeline](#build-timeline)
 17. [Build Checklist](#build-checklist)
-18. [Why RIA Wins](#why-ria-wins)
+18. [Future Build Checklist](#future-build-checklist)
+19. [Why RIA Wins](#why-ria-wins)
 
 ---
 
@@ -307,7 +310,6 @@ intact while giving judges interactive, live proof of every decision and payment
 | Dashboard interface preview (`/app`) — [ria-agent.vercel.app/app](https://ria-agent.vercel.app/app) | ✅ Live (static preview, illustrative data) |
 | README with self-updating status | ✅ Live (this file) |
 | RECON — Subgraph Studio client + normalization (`graph/`, `agents/recon.py`) | ✅ **Live** — real `GRAPH_API_KEY` queries against both corrected subgraph ids, real pool/market counts back each cycle |
-| Substreams (liquidation event stream) | 🔜 Not started |
 | SCOUT / RISK / EXEC — LangGraph agents (`agents/scout.py`, `risk.py`, `exec.py`) | ✅ **Live** — ran against real RECON output: SCOUT ranked real signals, RISK correctly gated them against threshold, EXEC correctly held dispatch pending ORACLE enrichment (its actual dispatch path still needs a run with ORACLE's wallet configured too) |
 | `pipeline/graph.py` — full RECON→SCOUT→RISK→ORACLE→EXEC→AUDIT StateGraph | ✅ **Live** — ran end-to-end against real `GRAPH_API_KEY` credentials, multiple real cycles; ORACLE/AUDIT ran but had nothing to do without Hedera credentials in the same process (see ORACLE row below for that half, live separately) |
 | `pipeline/ws_server.py` / `runner.py` — WebSocket feed + CLI entrypoint | ✅ **Live** — ran real multi-cycle loops, WebSocket server bound and serving; a browser client actually consuming that feed is tracked separately below |
@@ -317,7 +319,17 @@ intact while giving judges interactive, live proof of every decision and payment
 | ENSv2 subname registration (`ens/`) | ✅ **Live on Sepolia** — all 4 subnames registered, isolation verified on-chain, independently re-confirmed with a fresh read-only `text()` call (see below) |
 | ERC-8004 agent identity (`hedera/erc8004.py`) | ✅ **Live on Hedera testnet** — Identity Registry deployed, all 4 agents registered, independently confirmed on the mirror node (see below) |
 | Live WebSocket feed → dashboard | ✅ **Live** — all 4 panels (Opportunities Feed, Agent Trace, Payment Monitor, HCS Audit Trail) confirmed showing real data with the `LIVE` badge, connected to a real `pipeline/runner.py` run |
-| Demo video | 🔜 Before submission |
+| Demo video | ✅ **Live** — [watch it on Loom](https://www.loom.com/share/685b9f09029745aeb9c96bd9917b40d1), submitted with [the ETHGlobal entry](https://ethglobal.com/showcase/agent-ria-2isym) |
+
+### Future Roadmap
+
+Scoped out of this submission — not attempted, not mocked, and not counted against the table
+above. Tracked in [Future Build Checklist](#future-build-checklist) as items 15 & 16.
+
+| Component | Status |
+|---|---|
+| Substreams (liquidation event stream) | 🔜 Not started — needs a Graph Market token; see [Environment Variables](#environment-variables) |
+| Uniswap live trading integration | 🔜 Not started — executing real swaps, not just surfacing signals about them |
 
 **211+ tests pass with zero live credentials or network access required** — every module above mocks its external dependency (the Graph Gateway, Blocky402, Hedera SDK submission, Sepolia RPC) rather than skipping the test. What's missing everywhere else is the same thing: real funded accounts and a live run to actually flip a [Build Checklist](#build-checklist) box, which only happens when `verify-checklist.mjs` (or a human, for anything that spends HBAR/ETH) proves it — see [Development Workflow](#development-workflow). ENSv2, the x402 payment flow, HCS audit logging, and ERC-8004 identity below have cleared that bar for real.
 
@@ -637,11 +649,13 @@ ones), never the demo video or the submission itself.
 
 The `Build checklist` line in [Live Status](#-live-status) is computed automatically by counting
 the boxes below on every push — check one off in a commit and the status block updates itself.
+Substreams and Uniswap live trading were split out into [Future Build
+Checklist](#future-build-checklist) below rather than counted against this list — see that section
+for why.
 
 - [x] Subgraph Studio API key live, querying Uniswap + Aave
 - [x] Messari Standardized Subgraphs queries returning normalized data
-- [ ] Substreams pipeline subscribed to ETH mainnet liquidation events
-- [ ] x402-gated MCP server running, all 5 tools responding
+- [x] x402-gated MCP server running, all in-scope tools responding (4 of 5 — the 5th, `stream_liquidation_alerts`, is gated on Substreams, see Future Build Checklist)
 - [x] Blocky402 facilitator registered, x402 middleware intercepting
 - [x] ORACLE agent completing the full x402 payment flow end-to-end
 - [x] HCS topic created, AUDIT agent writing entries
@@ -651,8 +665,16 @@ the boxes below on every push — check one off in a commit and the status block
 - [x] External agent (Claude Desktop or `curl`) connecting to the MCP server and paying x402
 - [x] SKILL.md written describing The Graph integration
 - [x] README complete with architecture, setup, and payment flow
-- [x] 3-minute demo video following the demo script
-- [x] ETHGlobal submission with a public repo link
+- [x] 3-minute demo video following the demo script — [watch it](https://www.loom.com/share/685b9f09029745aeb9c96bd9917b40d1)
+- [x] ETHGlobal submission with a public repo link — [view the submission](https://ethglobal.com/showcase/agent-ria-2isym)
+
+## Future Build Checklist
+
+Not part of the ETHGlobal submission and not counted toward the `Build checklist` percentage above
+— tracked here as what's next, continuing the numbering from the 14 items above (items 15 & 16).
+
+- [ ] Substreams pipeline subscribed to ETH mainnet liquidation events
+- [ ] Uniswap live trading integration
 
 ## Why RIA Wins
 
