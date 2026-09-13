@@ -28,10 +28,10 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 |---|---|
 | **Current phase** | In progress — 8/15 build milestones verified |
 | **Build checklist** | `███████████░░░░░░░░░` 8/15 (53%) — verified live where possible, not self-reported |
-| **Time to ETHGlobal deadline** | 12h remaining — final push (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`5714a79`](https://github.com/arrnaya/AgentRIA/commit/5714a797947c847525284d31cc6c5f723f523474) Add RUN_LOCALLY.md -- full 3-terminal setup + verification playbook — Arrnaya |
-| **Total commits** | 121 |
-| **Last updated** | 2026-09-13 03:47 UTC |
+| **Time to ETHGlobal deadline** | 11h remaining — final push (deadline: Sun Sep 13, 12:00pm EDT) |
+| **Latest commit** | [`bf544f3`](https://github.com/arrnaya/AgentRIA/commit/bf544f3bcd617bed9a05b6408135ae1d0e6205a2) Trim RUN_LOCALLY.md's intro paragraph — Arrnaya |
+| **Total commits** | 124 |
+| **Last updated** | 2026-09-13 04:20 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
