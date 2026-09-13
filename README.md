@@ -315,7 +315,7 @@ intact while giving judges interactive, live proof of every decision and payment
 | AUDIT — HCS logging (`hedera/hcs_logger.py`, `agents/audit.py`) | ✅ **Live on Hedera testnet** — one real message logged to topic `0.0.10467384`, confirmed on the public mirror node (see below) |
 | ENSv2 subname registration (`ens/`) | ✅ **Live on Sepolia** — all 4 subnames registered, isolation verified on-chain, independently re-confirmed with a fresh read-only `text()` call (see below) |
 | ERC-8004 agent identity (`hedera/erc8004.py`) | ✅ **Live on Hedera testnet** — Identity Registry deployed, all 4 agents registered, independently confirmed on the mirror node (see below) |
-| Live WebSocket feed → dashboard | 🟡 Dashboard now wired (`src/hooks/useRiaSocket.ts`) and verified against a real WebSocket connection with synthetic pipeline events — needs `pipeline/runner.py` actually running (with a live `GRAPH_API_KEY`) for the dashboard to show real signals instead of the honest preview fallback |
+| Live WebSocket feed → dashboard | ✅ **Live** — all 4 panels (Opportunities Feed, Agent Trace, Payment Monitor, HCS Audit Trail) confirmed showing real data with the `LIVE` badge, connected to a real `pipeline/runner.py` run |
 | Demo video | 🔜 Before submission |
 
 **211+ tests pass with zero live credentials or network access required** — every module above mocks its external dependency (the Graph Gateway, Blocky402, Hedera SDK submission, Sepolia RPC) rather than skipping the test. What's missing everywhere else is the same thing: real funded accounts and a live run to actually flip a [Build Checklist](#build-checklist) box, which only happens when `verify-checklist.mjs` (or a human, for anything that spends HBAR/ETH) proves it — see [Development Workflow](#development-workflow). ENSv2, the x402 payment flow, HCS audit logging, and ERC-8004 identity below have cleared that bar for real.
@@ -643,10 +643,10 @@ the boxes below on every push — check one off in a commit and the status block
 - [x] HCS topic created, AUDIT agent writing entries
 - [x] ERC-8004 agent identities registered
 - [x] ENSv2 subnames registered with Permissioned Resolver
-- [ ] Dashboard — all 4 panels updating with live data
+- [x] Dashboard — all 4 panels updating with live data
 - [ ] External agent (Claude Desktop or `curl`) connecting to the MCP server and paying x402
 - [x] SKILL.md written describing The Graph integration
-- [ ] README complete with architecture, setup, and payment flow
+- [x] README complete with architecture, setup, and payment flow
 - [ ] 3-minute demo video following the demo script
 - [ ] ETHGlobal submission with a public repo link
 
