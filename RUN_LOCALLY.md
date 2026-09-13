@@ -1,10 +1,7 @@
 # Running RIA Locally — Full Live Stack + Test Playbook
 
 Everything needed to get all three processes running with real data and real payments, plus a
-step-by-step test sequence to confirm each panel/agent is genuinely live before you record. This is
-the detailed version behind README's [Running Locally](README.md#running-locally) and
-[`DEMO_SCRIPT.md`](DEMO_SCRIPT.md)'s terminal setup — read this once, then use `DEMO_SCRIPT.md` for
-the actual recording narration.
+step-by-step test sequence to confirm each panel/agent is genuinely live.
 
 ## What you need before starting
 
