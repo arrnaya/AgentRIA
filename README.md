@@ -26,12 +26,12 @@ Built solo by **Arrnaya (Arun Kumar Yadav)** for **ETHGlobal Online 2026**. Arch
 <!-- STATUS:START -->
 | | |
 |---|---|
-| **Current phase** | In progress — 10/15 build milestones verified |
-| **Build checklist** | `█████████████░░░░░░░` 10/15 (67%) — verified live where possible, not self-reported |
-| **Time to ETHGlobal deadline** | 11h remaining — final push (deadline: Sun Sep 13, 12:00pm EDT) |
-| **Latest commit** | [`620f34a`](https://github.com/arrnaya/AgentRIA/commit/620f34a71ddf677830bae578b3858ed60eb31d85) Check off dashboard-live and README-complete -- confirmed, previously missed — Arrnaya |
-| **Total commits** | 128 |
-| **Last updated** | 2026-09-13 04:59 UTC |
+| **Current phase** | In progress — 11/15 build milestones verified |
+| **Build checklist** | `███████████████░░░░░` 11/15 (73%) — verified live where possible, not self-reported |
+| **Time to ETHGlobal deadline** | 10h remaining — final push (deadline: Sun Sep 13, 12:00pm EDT) |
+| **Latest commit** | [`b9eb1d3`](https://github.com/arrnaya/AgentRIA/commit/b9eb1d38f314950e931299f20939e25cd78015d8) External agent x402 is live -- 4/5 tools paid by a standalone script — Arrnaya |
+| **Total commits** | 130 |
+| **Last updated** | 2026-09-13 05:12 UTC |
 
 _This block is regenerated automatically by [.github/workflows/update-status.yml](.github/workflows/update-status.yml) on every push to `main`, after [verify-checklist.mjs](.github/scripts/verify-checklist.mjs) attempts to prove each checklist item live._
 <!-- STATUS:END -->
