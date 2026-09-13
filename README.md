@@ -333,6 +333,8 @@ intact while giving judges interactive, live proof of every decision and payment
 
 That was a one-off manual smoke test. Since then, ORACLE has paid **autonomously and repeatedly** through the real `pipeline/runner.py` loop — no script, no human triggering each call. A representative example, independently pulled from the mirror node's own transaction history for the account (not the pipeline's log output): [`0.0.7162784-1789120758-359904050`](https://hashscan.io/testnet/transaction/0.0.7162784-1789120758-359904050), `get_risk_score` (0.002 HBAR), buyer `0.0.10452229` → resource server `0.0.10451954`, facilitator `0.0.7162784` — one of over a dozen consecutive `SUCCESS` transfers of the same shape in that run.
 
+A separate, standalone script (`scripts/external_agent_demo.py`) — a distinct process, never touching RIA's pipeline state — connected cold and paid for 4 of the 5 tools independently: `get_gas_price`, `get_sentiment`, `get_price_feed`, `get_risk_score`, each a real settled payment (`stream_liquidation_alerts` is skipped by design, see [What's Live](#whats-live-in-this-repo-right-now)). One of its settlements, independently confirmed: [`0.0.7162784-1789276017-890356063`](https://hashscan.io/testnet/transaction/0.0.7162784-1789276017-890356063) — `SUCCESS`, `get_risk_score`, 0.002 HBAR.
+
 AUDIT's HCS trail is live too — one real message, independently decoded and confirmed against the mirror node (not just the script's own claim):
 
 | Step | Value |
@@ -644,7 +646,7 @@ the boxes below on every push — check one off in a commit and the status block
 - [x] ERC-8004 agent identities registered
 - [x] ENSv2 subnames registered with Permissioned Resolver
 - [x] Dashboard — all 4 panels updating with live data
-- [ ] External agent (Claude Desktop or `curl`) connecting to the MCP server and paying x402
+- [x] External agent (Claude Desktop or `curl`) connecting to the MCP server and paying x402
 - [x] SKILL.md written describing The Graph integration
 - [x] README complete with architecture, setup, and payment flow
 - [ ] 3-minute demo video following the demo script
