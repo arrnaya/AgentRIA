@@ -211,12 +211,49 @@ class X402Client:
             raise X402PaymentError(f"SSE response from MCP server had no 'data:' event: {response.text[:300]}")
         return response.json()
 
+    @staticmethod
+    def _unwrap_tool_content(result: Any) -> Any:
+        """FastMCP wraps a tool's own return value in MCP's content envelope
+        (`{"content": [{"type": "text", "text": "<json>"}], "isError": ...}`)
+        rather than returning it directly. Confirmed via a real live call's
+        exact wire shape (a smoke test's own printed output:
+        `{'content': [{'type': 'text', 'text': '{"network": ...}'}], ...}`).
+
+        Every caller of `call_tool()` -- agents/oracle.py chief among them --
+        expects `ToolCallResult.result` to be the tool's actual return value
+        (e.g. `get_risk_score`'s `confidence_delta`/`raw_response` keys
+        directly), not this transport-level wrapper. Left unwrapped, `.get()`
+        calls against those keys always silently returned the default: this
+        real bug shipped a `confidence_delta` of `0.0` for every enrichment
+        ever run, and a `raw_response` of `None` (hence AUDIT's HCS entries
+        always logging `response_hash: null`) -- undetected because the
+        existing tests mocked a flat dict, not the real wire shape.
+
+        Falls back to the raw result unchanged if it doesn't match the
+        expected envelope shape, so a tool returning something else (or a
+        future FastMCP version with a different envelope) degrades to the
+        old behavior rather than crashing.
+        """
+        if not isinstance(result, dict):
+            return result
+        content = result.get("content")
+        if not (isinstance(content, list) and content):
+            return result
+        first = content[0]
+        if not (isinstance(first, dict) and first.get("type") == "text"):
+            return result
+        try:
+            return json.loads(first["text"])
+        except (json.JSONDecodeError, TypeError):
+            return result
+
     @classmethod
     def _parse_rpc_response(cls, response: httpx.Response) -> dict[str, Any]:
         body = cls._parse_response_body(response)
         if isinstance(body, dict) and body.get("error"):
             raise X402PaymentError(f"MCP tool call returned an error: {body['error']}")
-        return body.get("result", body) if isinstance(body, dict) else body
+        result = body.get("result", body) if isinstance(body, dict) else body
+        return cls._unwrap_tool_content(result)
 
     async def call_tool(
         self, tool_name: str, arguments: dict[str, Any] | None = None

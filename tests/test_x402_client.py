@@ -161,6 +161,42 @@ async def test_sse_framed_response_is_parsed(wallet):
 
 
 @respx.mock
+async def test_call_tool_unwraps_real_mcp_content_envelope(wallet):
+    """Regression test for a real bug: FastMCP wraps a tool's own return
+    value in MCP's content envelope (`{"content": [{"type": "text", "text":
+    "<json>"}], "isError": ...}`), not the flat dict other tests in this
+    file mock for convenience. agents/oracle.py reads
+    `outcome.result.get("confidence_delta")` and `.get("raw_response")`
+    directly -- against the *unwrapped* envelope, both always silently
+    returned their defaults (0.0 and None), which is why every real
+    enrichment ever run had confidence_delta=0.0 and every AUDIT HCS entry
+    had response_hash=null. Confirmed against a real smoke-test's actual
+    printed wire shape, not guessed."""
+    real_tool_return = {
+        "opportunity_id": "x",
+        "confidence_delta": 0.42,
+        "gas": {"network": "ethereum", "safe_gwei": 10.0},
+        "price": {"token": "ETH", "usd": 2500.0},
+        "raw_response": '{"confidence_delta": 0.42, "reason": "looks fine"}',
+    }
+    mcp_envelope = {"content": [{"type": "text", "text": json.dumps(real_tool_return)}], "isError": False}
+
+    route = respx.post(MCP_URL)
+    route.side_effect = [
+        _init_response(),
+        httpx.Response(402, json={"x402Version": 2, "accepts": [_requirements()]}),
+        _rpc_result_response(mcp_envelope),
+    ]
+
+    client = X402Client(wallet=wallet, mcp_url=MCP_URL)
+    result = await client.call_tool("get_risk_score", {"opportunity": {"id": "x"}})
+
+    assert result.result == real_tool_return
+    assert result.result["confidence_delta"] == 0.42
+    assert result.result["raw_response"] is not None
+
+
+@respx.mock
 async def test_paid_tool_builds_signs_and_retries_with_payment(wallet):
     challenge_body = {"x402Version": 2, "error": "payment required", "accepts": [_requirements()]}
     settlement = {
