@@ -139,8 +139,8 @@ something doesn't come up live, instead of debugging blind during a take.
    export HEDERA_PRIVATE_KEY=your_account_C_private_key
    python scripts/external_agent_demo.py
    ```
-   Confirm it reports `4/4 tools called successfully`. This is the segment 2:20–2:40 "killer
-   moment" in `DEMO_SCRIPT.md`.
+   Confirm it reports `4/4 tools called successfully`. This is the "killer moment" segment
+   (2:20–2:40) in the [recorded demo](https://www.loom.com/share/685b9f09029745aeb9c96bd9917b40d1).
 7. **Only once all of the above passes once, start recording** and repeat the same sequence live —
    you already know it works, so the recording is a rerun, not a first attempt.
 
@@ -157,9 +157,3 @@ something doesn't come up live, instead of debugging blind during a take.
 | `subgraph not found` from the Graph Gateway | A pinned Messari deployment id went stale | See `SKILL.md` for exactly how to re-derive the current id — this happened once already this build |
 | Dashboard stuck on `PREVIEW` for every panel | Frontend isn't actually connected | Check you're on `localhost:PORT/app`, not the deployed Vercel URL, and that `NEXT_PUBLIC_RIA_WS_URL`'s port matches Terminal 2's `--ws-port` exactly |
 | Dashboard live for 3 panels but HCS Audit Trail stuck on `PREVIEW` | `HCS_TOPIC_ID` missing in Terminal 2, or EXEC hasn't dispatched anything yet this run | Set `HCS_TOPIC_ID`; give it one more `--interval` cycle |
-
-## What to screenshot for the ETHGlobal submission
-
-See the six recommended shots (dashboard live, MCP terminal log, a HashScan tx, ENS resolution, HCS
-topic on the mirror node, landing page) — same list already given in conversation; grab these once
-step 4-5 above are confirmed live.

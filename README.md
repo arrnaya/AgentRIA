@@ -40,9 +40,10 @@ This repo is being built in public and the block above tells the truth about pro
 computed from the checked boxes in the [Build Checklist](#build-checklist), not from a calendar.
 The full Python backend is live: RECON pulling real Graph data, ORACLE paying real HBAR via x402
 (repeatedly, autonomously), HCS audit logging, ERC-8004 identity, and ENSv2 identity are all
-confirmed on-chain — see [What's Live](#whats-live-in-this-repo-right-now) for the receipts. What's
-left is Substreams (explicitly scoped out, see [Build Timeline](#build-timeline)), a fully-connected
-dashboard demo, and the submission itself.
+confirmed on-chain — see [What's Live](#whats-live-in-this-repo-right-now) for the receipts. The
+demo is recorded and the [ETHGlobal submission](https://ethglobal.com/showcase/agent-ria-2isym) is
+in. What's left is Substreams and getting the x402-gated MCP server to all 5 tools live (both
+explicitly scoped out, see [Build Timeline](#build-timeline)).
 
 ---
 
@@ -548,10 +549,11 @@ python -m scripts.register_erc8004_live     # ERC-8004 identity registration (He
 
 ## Demo Strategy
 
-The demo has one job: show that every claim is verifiable on-chain, live. No pre-recorded output,
-no mocked data — every panel updates during the recording. [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) is the
-full word-for-word version of the table below — exact commands, exact narration, a pre-flight
-checklist, and what to do if a segment doesn't cooperate live.
+The demo's one job was to show that every claim is verifiable on-chain, live — no pre-recorded
+output, no mocked data, every panel updating during the recording. That recording is done and
+submitted: [watch the demo](https://www.loom.com/share/685b9f09029745aeb9c96bd9917b40d1) ·
+[ETHGlobal submission](https://ethglobal.com/showcase/agent-ria-2isym). The table below is the
+outline it followed.
 
 | Time | Action | What a judge sees |
 |---|---|---|
@@ -649,8 +651,8 @@ the boxes below on every push — check one off in a commit and the status block
 - [x] External agent (Claude Desktop or `curl`) connecting to the MCP server and paying x402
 - [x] SKILL.md written describing The Graph integration
 - [x] README complete with architecture, setup, and payment flow
-- [ ] 3-minute demo video following the demo script
-- [ ] ETHGlobal submission with a public repo link
+- [x] 3-minute demo video following the demo script
+- [x] ETHGlobal submission with a public repo link
 
 ## Why RIA Wins
 
